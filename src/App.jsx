@@ -10,12 +10,7 @@ const fmt  = n => "$" + Math.abs(n).toLocaleString("en-US",{maximumFractionDigit
 const fmtD = n => "$" + Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const toDate = m => { const d=new Date(); d.setMonth(d.getMonth()+Math.round(m)); return d.toLocaleDateString("en-US",{month:"long",year:"numeric"}); };
 
-const DEBTS = [
-  {id:1,name:"Federal Student Loan",balance:24800,original:32000,rate:5.05,min:280,type:"student",color:C.blue},
-  {id:2,name:"Car Payment",         balance:8400, original:14000,rate:7.9, min:320,type:"auto",   color:C.yellow},
-  {id:3,name:"Chase Sapphire",      balance:2340, original:5000, rate:24.99,min:47, type:"credit", color:C.red},
-  {id:4,name:"Discover It",         balance:680,  original:2000, rate:19.99,min:25, type:"credit", color:C.red},
-];
+const DEBTS = [];
 
 const STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -268,7 +263,7 @@ function Onboarding({onDone}) {
 }
 
 // ── Home ──────────────────────────────────────────────────────────────────────
-function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name}) {
+function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt}) {
   const total=debts.reduce((s,d)=>s+d.balance,0);
   const orig =debts.reduce((s,d)=>s+d.original,0);
   const mins =debts.reduce((s,d)=>s+d.min,0);
@@ -285,6 +280,31 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name}) {
     {e:"🏁",t:"Final stretch",s:"Under 25% left",ok:pct<=.25},
   ];
   const done = MS.filter(m=>m.ok);
+
+  if(debts.length===0) return (
+    <div className="scroll">
+      <div style={{marginBottom:18}}>
+        <div style={{fontSize:13,color:C.muted,marginBottom:4}}>{greet}{name?`, ${name}`:""} 👋</div>
+        <div style={{fontSize:26,fontWeight:800,marginBottom:8,lineHeight:1.2}}>Let's build your debt payoff plan</div>
+        <div style={{fontSize:14,color:C.muted,lineHeight:1.6}}>Add your first debt to get started. It takes about 2 minutes.</div>
+      </div>
+      <div className="card" style={{borderColor:C.accent+"40",background:"linear-gradient(135deg,#141B27,#0F1A0F)",marginBottom:16,textAlign:"center",padding:28}}>
+        <div style={{fontSize:44,marginBottom:12}}>💳</div>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>No debts added yet</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}>Add your student loans, credit cards, car payments — anything you owe.</div>
+        <button className="btn bp bfull" onClick={()=>onAddDebt()}>+ Add your first debt</button>
+      </div>
+      <div className="card">
+        <div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",marginBottom:12}}>What you'll see here</div>
+        {[["📊","Total debt overview","Your balances, interest costs, and payoff timeline"],["🎯","Freedom Date","The exact month you'll be debt-free"],["🏆","Milestones","Celebrate every win along the way"],["💡","Daily interest cost","See exactly what debt costs you per day"]].map(([e,t,s],i)=>(
+          <div key={i} style={{display:"flex",gap:10,padding:"10px 0",borderBottom:i<3?`1px solid ${C.border}`:"none"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div><div style={{fontWeight:600,fontSize:13}}>{t}</div><div style={{fontSize:11,color:C.muted,marginTop:2}}>{s}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="scroll">
@@ -670,7 +690,7 @@ function InvestTab({debts,isPlus,onUpgrade}) {
   const [aiLoad,setAiLoad]=useState(false);
 
   const totalDebt=debts.reduce((s,d)=>s+d.balance,0);
-  const highRate=Math.max(...debts.map(d=>d.rate));
+  const highRate=debts.length>0?Math.max(...debts.map(d=>d.rate)):0;
   const creditCards=debts.filter(d=>d.type==="credit");
   const hasHighRateDebt=creditCards.some(d=>d.rate>15);
 
@@ -678,12 +698,16 @@ function InvestTab({debts,isPlus,onUpgrade}) {
   const readyToInvest=highRate<8;
   const match401k=true; // always grab free money
 
-  const ACCOUNTS=[
-    {name:"401(k) — Fidelity",  balance:4200, change:+3.2, color:C.success, type:"Retirement"},
-    {name:"Roth IRA — Vanguard", balance:1800, change:+1.8, color:C.success, type:"Retirement"},
-    {name:"HYSA — Marcus",       balance:3100, change:+0.4, color:C.blue,    type:"Savings"},
-  ];
-  const totalInvested=ACCOUNTS.reduce((s,a)=>s+a.balance,0);
+  const [accounts,setAccounts]=useState([]);
+  const [showAddAccount,setShowAddAccount]=useState(false);
+  const [newAcct,setNewAcct]=useState({name:"",balance:"",type:"Retirement"});
+  const totalInvested=accounts.reduce((s,a)=>s+a.balance,0);
+  const addAccount=()=>{
+    if(!newAcct.name||!newAcct.balance)return;
+    setAccounts(a=>[...a,{id:Date.now(),name:newAcct.name,balance:parseFloat(newAcct.balance),type:newAcct.type,color:newAcct.type==="Retirement"?C.success:newAcct.type==="Savings"?C.blue:C.yellow}]);
+    setNewAcct({name:"",balance:"",type:"Retirement"});
+    setShowAddAccount(false);
+  };
 
   const STEPS=[
     {n:1, t:"Emergency fund",       s:"1–3 months expenses in HYSA",           ok:true,  tag:"Done"},
@@ -713,29 +737,37 @@ function InvestTab({debts,isPlus,onUpgrade}) {
   return (
     <div className="scroll">
 
-      {/* Invest vs. pay debt banner */}
-      <div className="card" style={{borderColor:readyToInvest?C.success+"44":C.yellow+"44",background:readyToInvest?"linear-gradient(135deg,#141B27,#0F1A14)":"linear-gradient(135deg,#141B27,#1A1800)",marginBottom:16}}>
-        <div style={{fontSize:22,marginBottom:8}}>{readyToInvest?"📈":"⚖️"}</div>
-        <div style={{fontWeight:700,fontSize:15,marginBottom:6}}>
-          {readyToInvest?"You're ready to invest":"Debt vs. investing — here's the math"}
+      {/* Invest vs. pay debt decision engine */}
+      {debts.length===0?(
+        <div className="card" style={{borderColor:C.blue+"44",marginBottom:16}}>
+          <div style={{fontSize:22,marginBottom:8}}>⚖️</div>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:6}}>Debt vs. investing</div>
+          <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Add your debts in the Debts tab to get a personalized recommendation on whether to pay down debt or start investing first.</div>
         </div>
-        <div style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:12}}>
-          {hasHighRateDebt
-            ? `Your ${creditCards[0]?.name} charges ${creditCards[0]?.rate}% APR. Paying it off is a guaranteed ${creditCards[0]?.rate}% return — better than most investments.`
-            : `Your highest rate is ${highRate}%. Index funds average ~10%/yr — it makes sense to invest now while still paying down debt.`
-          }
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          <div style={{flex:1,background:C.surface,borderRadius:9,padding:"10px 12px",border:`1px solid ${C.border}`}}>
-            <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>Highest debt APR</div>
-            <div className="mono" style={{fontSize:18,fontWeight:500,color:highRate>10?C.red:highRate>7?C.yellow:C.success}}>{highRate}%</div>
+      ):(
+        <div className="card" style={{borderColor:readyToInvest?C.success+"44":C.yellow+"44",background:readyToInvest?"linear-gradient(135deg,#141B27,#0F1A14)":"linear-gradient(135deg,#141B27,#1A1800)",marginBottom:16}}>
+          <div style={{fontSize:22,marginBottom:8}}>{readyToInvest?"📈":"⚖️"}</div>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:6}}>
+            {readyToInvest?"You're ready to invest":"Debt vs. investing — here's the math"}
           </div>
-          <div style={{flex:1,background:C.surface,borderRadius:9,padding:"10px 12px",border:`1px solid ${C.border}`}}>
-            <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>S&P 500 avg/yr</div>
-            <div className="mono" style={{fontSize:18,fontWeight:500,color:C.success}}>~10%</div>
+          <div style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:12}}>
+            {hasHighRateDebt
+              ? `Your ${creditCards[0]?.name} charges ${creditCards[0]?.rate}% APR. Paying it off is a guaranteed ${creditCards[0]?.rate}% return — better than most investments.`
+              : `Your highest rate is ${highRate}%. Index funds average ~10%/yr — it makes sense to invest now while still paying down debt.`
+            }
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:C.surface,borderRadius:9,padding:"10px 12px",border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>Highest debt APR</div>
+              <div className="mono" style={{fontSize:18,fontWeight:500,color:highRate>10?C.red:highRate>7?C.yellow:C.success}}>{highRate}%</div>
+            </div>
+            <div style={{flex:1,background:C.surface,borderRadius:9,padding:"10px 12px",border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>S&P 500 avg/yr</div>
+              <div className="mono" style={{fontSize:18,fontWeight:500,color:C.success}}>~10%</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Investment order of operations */}
       <p className="lbl">Investment order of operations</p>
@@ -753,24 +785,43 @@ function InvestTab({debts,isPlus,onUpgrade}) {
       </div>
 
       {/* Your accounts */}
-      <p className="lbl">Your investment accounts</p>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <p className="lbl" style={{marginBottom:0}}>Your investment accounts</p>
+        <button className="btn bp bsm" onClick={()=>setShowAddAccount(v=>!v)}>+ Add account</button>
+      </div>
+      {showAddAccount&&(
+        <div className="card" style={{marginBottom:12,borderColor:C.accent+"40"}}>
+          <div className="fld"><div className="flb">Account name</div><input className="inp" placeholder="e.g. Roth IRA — Vanguard" value={newAcct.name} onChange={e=>setNewAcct(v=>({...v,name:e.target.value}))}/></div>
+          <div className="fld"><div className="flb">Current balance</div><input className="inp mono" type="number" placeholder="0.00" value={newAcct.balance} onChange={e=>setNewAcct(v=>({...v,balance:e.target.value}))}/></div>
+          <div className="fld"><div className="flb">Type</div><select className="inp" value={newAcct.type} onChange={e=>setNewAcct(v=>({...v,type:e.target.value}))}><option>Retirement</option><option>Savings</option><option>Brokerage</option></select></div>
+          <div style={{display:"flex",gap:8}}><button className="btn bg bsm" onClick={()=>setShowAddAccount(false)}>Cancel</button><button className="btn bp" style={{flex:1}} onClick={addAccount}>Add account</button></div>
+        </div>
+      )}
       <div className="card" style={{marginBottom:16}}>
-        {ACCOUNTS.map((a,i)=>(
-          <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:i<ACCOUNTS.length-1?`1px solid ${C.border}`:"none"}}>
+        {accounts.length===0?(
+          <div style={{textAlign:"center",padding:"20px 0",color:C.muted}}>
+            <div style={{fontSize:28,marginBottom:8}}>💰</div>
+            <div style={{fontSize:13}}>No accounts added yet</div>
+            <div style={{fontSize:11,marginTop:4}}>Tap "+ Add account" to track your investments</div>
+          </div>
+        ):accounts.map((a,i)=>(
+          <div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:i<accounts.length-1?`1px solid ${C.border}`:"none"}}>
             <div>
               <div style={{fontWeight:600,fontSize:13}}>{a.name}</div>
               <div style={{display:"flex",gap:6,marginTop:3,alignItems:"center"}}>
                 <span className="tag tb" style={{fontSize:9}}>{a.type}</span>
-                <span style={{fontSize:11,color:C.success}}>+{a.change}% this month</span>
               </div>
             </div>
-            <div className="mono" style={{fontSize:15,fontWeight:500,color:a.color}}>{fmt(a.balance)}</div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div className="mono" style={{fontSize:15,fontWeight:500,color:a.color}}>{fmt(a.balance)}</div>
+              <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:11}} onClick={()=>setAccounts(ac=>ac.filter(x=>x.id!==a.id))}>✕</button>
+            </div>
           </div>
         ))}
-        <div style={{display:"flex",justifyContent:"space-between",paddingTop:12,marginTop:4,borderTop:`1px solid ${C.border}`}}>
+        {accounts.length>0&&<div style={{display:"flex",justifyContent:"space-between",paddingTop:12,marginTop:4,borderTop:`1px solid ${C.border}`}}>
           <span style={{fontWeight:700,fontSize:13}}>Total invested</span>
           <span className="mono" style={{fontWeight:700,fontSize:15,color:C.success}}>{fmt(totalInvested)}</span>
-        </div>
+        </div>}
       </div>
 
       {/* AI insight */}
@@ -1140,7 +1191,7 @@ export default function App() {
           </div>
         )}
 
-        {tab==="home"  &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name}/>}
+        {tab==="home"  &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}}/>}
         {tab==="debts" &&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop}/>}
         {tab==="plan"  &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
         {tab==="credit"&&<CreditTab debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} score={score} setScore={setScore}/>}
