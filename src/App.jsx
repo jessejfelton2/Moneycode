@@ -709,14 +709,17 @@ function InvestTab({debts,isPlus,onUpgrade}) {
     setShowAddAccount(false);
   };
 
-  const STEPS=[
-    {n:1, t:"Emergency fund",       s:"1–3 months expenses in HYSA",           ok:true,  tag:"Done"},
-    {n:2, t:"401(k) match",         s:"Always grab free employer money first",  ok:true,  tag:"Done"},
-    {n:3, t:"High-rate debt",       s:"Pay off any debt above 7% APR",          ok:!hasHighRateDebt, tag:hasHighRateDebt?"In progress":"Done"},
-    {n:4, t:"Roth IRA",             s:"Max $7,000/yr tax-free growth",          ok:false, tag:"Next"},
-    {n:5, t:"Max 401(k)",           s:"$23,000/yr pre-tax limit",               ok:false, tag:"Later"},
-    {n:6, t:"Taxable brokerage",    s:"Index funds after tax-advantaged maxed", ok:false, tag:"Later"},
+  const STEP_DEFS=[
+    {n:1, t:"Emergency fund",     s:"1–3 months of expenses saved in a HYSA"},
+    {n:2, t:"401(k) match",       s:"Get the full employer match — it's free money"},
+    {n:3, t:"High-rate debt",     s:"Pay off debts above 7% APR before investing more"},
+    {n:4, t:"Roth IRA",           s:"Max $7,000/yr — tax-free growth forever"},
+    {n:5, t:"Max 401(k)",         s:"$23,000/yr pre-tax contribution limit"},
+    {n:6, t:"Taxable brokerage",  s:"Index funds after tax-advantaged accounts are maxed"},
   ];
+  const [checkedSteps,setCheckedSteps]=useState({});
+  const toggleStep=n=>setCheckedSteps(s=>({...s,[n]:!s[n]}));
+  const firstUnchecked=STEP_DEFS.findIndex(s=>!checkedSteps[s.n]);
 
   const getAI=async()=>{
     setAiLoad(true);
@@ -770,18 +773,26 @@ function InvestTab({debts,isPlus,onUpgrade}) {
       )}
 
       {/* Investment order of operations */}
-      <p className="lbl">Investment order of operations</p>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <p className="lbl" style={{marginBottom:0}}>Investment order of operations</p>
+        <span style={{fontSize:11,color:C.muted}}>{Object.values(checkedSteps).filter(Boolean).length}/{STEP_DEFS.length} done</span>
+      </div>
+      <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.5}}>Tap each step to mark it done. Work through these in order.</div>
       <div className="card" style={{marginBottom:16}}>
-        {STEPS.map((s,i)=>(
-          <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"11px 0",borderBottom:i<STEPS.length-1?`1px solid ${C.border}`:"none"}}>
-            <div style={{width:24,height:24,borderRadius:"50%",background:s.ok?C.success:i===STEPS.findIndex(x=>!x.ok)?C.accent:C.border,color:s.ok||i===STEPS.findIndex(x=>!x.ok)?"#080C12":C.muted,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,marginTop:1}}>{s.ok?"✓":s.n}</div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:600,fontSize:13,color:s.ok?C.muted:C.text}}>{s.t}</div>
-              <div style={{fontSize:11,color:C.muted,marginTop:2,lineHeight:1.4}}>{s.s}</div>
+        {STEP_DEFS.map((s,i)=>{
+          const done=!!checkedSteps[s.n];
+          const isCurrent=i===firstUnchecked;
+          return(
+            <div key={i} onClick={()=>toggleStep(s.n)} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"13px 0",borderBottom:i<STEP_DEFS.length-1?`1px solid ${C.border}`:"none",cursor:"pointer"}}>
+              <div style={{width:26,height:26,borderRadius:"50%",background:done?C.success:isCurrent?C.accent:C.border,color:done||isCurrent?"#080C12":C.muted,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,marginTop:1,transition:"all .2s"}}>{done?"✓":s.n}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:13,color:done?C.muted:C.text,textDecoration:done?"line-through":"none"}}>{s.t}</div>
+                <div style={{fontSize:11,color:C.muted,marginTop:2,lineHeight:1.4}}>{s.s}</div>
+              </div>
+              <span className={`tag ${done?"tg":isCurrent?"tb":"tp"}`} style={{marginTop:2,flexShrink:0}}>{done?"Done":isCurrent?"Next":"Later"}</span>
             </div>
-            <span className={`tag ${s.ok?"tg":i===STEPS.findIndex(x=>!x.ok)?"tb":"tp"}`} style={{marginTop:2,flexShrink:0}}>{s.tag}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Your accounts */}
