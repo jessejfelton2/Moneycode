@@ -30,11 +30,15 @@ const TERMS = {
 };
 
 const CSS = `
+html{overflow:hidden;height:100%;}
+body{overflow:hidden;height:100%;touch-action:manipulation;}
+input,select,textarea{font-size:16px!important;}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
-.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
-.scroll{flex:1;overflow-y:auto;padding:14px 14px 96px;}
+.app{max-width:430px;margin:0 auto;height:100vh;max-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.scroll{flex:1;overflow-y:auto;padding:14px 14px 96px;height:0;}
 .scroll::-webkit-scrollbar{display:none;}
 .mono{font-family:'DM Mono',monospace;}
 .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#0F1520;border-top:1px solid #1E2D42;display:flex;z-index:100;}
@@ -49,7 +53,7 @@ body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-fon
 .chip{background:#141B27;border:1px solid #1E2D42;border-radius:10px;padding:11px;flex:1;}
 .cv{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;line-height:1;}
 .cl{font-size:9px;color:#5B7087;margin-top:3px;font-weight:500;}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .bp{background:#B5FF4D;color:#080C12;}
 .bp:hover{filter:brightness(1.08);}
 .bp:disabled{opacity:.4;cursor:not-allowed;}
@@ -92,10 +96,10 @@ body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-fon
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @keyframes slideup{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.ob{min-height:100vh;display:flex;flex-direction:column;padding:40px 20px 36px;}
+.ob{height:100vh;max-height:100vh;display:flex;flex-direction:column;padding:40px 20px 36px;overflow-y:auto;}
 .opip{height:3px;flex:1;border-radius:2px;background:#1E2D42;transition:background .3s;}
 .opip.on{background:#B5FF4D;}
-.oopt{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #1E2D42;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#141B27;transition:all .15s;}
+.oopt{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #1E2D42;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#141B27;transition:all .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
 .oopt.on{border-color:#B5FF4D;background:rgba(181,255,77,.06);}
 .ttrk{width:42px;height:23px;border-radius:12px;border:none;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0;}
 .ttmb{position:absolute;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .2s;}
@@ -116,7 +120,7 @@ body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-fon
 .learn-card{background:#141B27;border:1px solid #1E2D42;border-radius:14px;padding:18px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
 .learn-card:hover{border-color:#B5FF4D44;}
 .learn-card.done{border-color:#3FB95044;background:#0F1A14;}
-.lesson-screen{position:fixed;inset:0;background:#080C12;z-index:300;display:flex;flex-direction:column;padding:0;max-width:430px;margin:0 auto;}
+.lesson-screen{position:fixed;inset:0;background:#080C12;z-index:300;display:flex;flex-direction:column;padding:0;max-width:430px;margin:0 auto;overflow:hidden;}
 .lesson-content{flex:1;overflow-y:auto;padding:24px 20px;}
 .lesson-content::-webkit-scrollbar{display:none;}
 .quiz-opt{padding:13px;border:1px solid #1E2D42;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:13px;transition:all .15s;}
@@ -243,6 +247,8 @@ function calcHealth({debts,score,assets,income,efund}){
 // ── ONBOARDING ─────────────────────────────────────────────────────────────────
 function Onboarding({onDone}){
   const [step,setStep]=useState(0);
+  // Prevent browser zoom on input focus
+  useEffect(()=>{ const m=document.querySelector("meta[name=viewport]"); if(m) m.content="width=device-width,initial-scale=1,maximum-scale=1"; },[]);
   const [name,setName]=useState("");
   const [hasDebts,setHasDebts]=useState(null);
   const [hasJob,setHasJob]=useState(null);
@@ -1002,7 +1008,7 @@ function PlanTab({debts,isPlus,onUpgrade}){
 function MoneyTab({debts,assets,setAssets,income,setIncome,efund,setEfund,isPlus,onUpgrade,pop}){
   const [sub,setSub]=useState("worth");
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
+    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
       <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
         <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
           {[{id:"worth",l:"Net Worth"},{id:"budget",l:"Budget"},{id:"invest",l:"Invest"}].map(s=>(
@@ -1245,7 +1251,7 @@ function InvestTab({debts,isPlus,onUpgrade}){
   const addAcct=()=>{if(!form.name||!form.balance)return;const bal=Math.abs(parseFloat(form.balance)||0);if(!isFinite(bal))return;setAccounts(a=>[...a,{id:Date.now(),name:form.name,balance:bal,type:form.type,color:{Retirement:C.success,Brokerage:C.blue,Savings:C.yellow,Crypto:C.purple}[form.type]||C.blue}]);setForm({name:"",balance:"",type:"Retirement"});setShowAdd(false);};
 
   return(
-    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
+    <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
       <div className="subnav">
         {[{id:"vs",l:"Debt vs Invest"},{id:"steps",l:"What to do first"},{id:"accounts",l:"My accounts"}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
@@ -1367,7 +1373,7 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
   };
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
+    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
       <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
         <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
           {[{id:"score",l:"Health Score"},{id:"credit",l:"Credit Score"},{id:"ai",l:`AI Advisor${!isPlus?" ✦":""}`}].map(s=>(
@@ -1804,7 +1810,7 @@ export default function App(){
 function HealthAndLearnTab({completedLessons,onCompleteLesson,onOpenLesson,debts,isPlus,onUpgrade,score,setScore,assets,income,efund}){
   const [sub,setSub]=useState("lessons");
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
+    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
       <div className="subnav" style={{background:C.surface}}>
         {[{id:"lessons",l:"Money 101"},{id:"health",l:"Health"},{id:"credit",l:"Credit"},{id:"ai",l:`AI${!isPlus?" ✦":""}`}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
