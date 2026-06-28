@@ -30,15 +30,13 @@ const TERMS = {
 };
 
 const CSS = `
-html{overflow:hidden;height:100%;}
-body{overflow:hidden;height:100%;touch-action:manipulation;}
 input,select,textarea{font-size:16px!important;}
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
-.app{max-width:430px;margin:0 auto;height:100vh;max-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-.scroll{flex:1;overflow-y:auto;padding:14px 14px 96px;height:0;}
+.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+.scroll{overflow-y:auto;padding:14px 14px 96px;}
 .scroll::-webkit-scrollbar{display:none;}
 .mono{font-family:'DM Mono',monospace;}
 .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#0F1520;border-top:1px solid #1E2D42;display:flex;z-index:100;}
@@ -96,10 +94,10 @@ body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-fon
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @keyframes slideup{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.ob{height:100vh;max-height:100vh;display:flex;flex-direction:column;padding:40px 20px 36px;overflow-y:auto;}
+.ob{min-height:100vh;display:flex;flex-direction:column;padding:40px 20px 36px;overflow-y:auto;}
 .opip{height:3px;flex:1;border-radius:2px;background:#1E2D42;transition:background .3s;}
 .opip.on{background:#B5FF4D;}
-.oopt{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #1E2D42;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#141B27;transition:all .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
+.oopt{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #1E2D42;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#141B27;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
 .oopt.on{border-color:#B5FF4D;background:rgba(181,255,77,.06);}
 .ttrk{width:42px;height:23px;border-radius:12px;border:none;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0;}
 .ttmb{position:absolute;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .2s;}
@@ -1008,7 +1006,7 @@ function PlanTab({debts,isPlus,onUpgrade}){
 function MoneyTab({debts,assets,setAssets,income,setIncome,efund,setEfund,isPlus,onUpgrade,pop}){
   const [sub,setSub]=useState("worth");
   return(
-    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
       <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
         <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
           {[{id:"worth",l:"Net Worth"},{id:"budget",l:"Budget"},{id:"invest",l:"Invest"}].map(s=>(
@@ -1251,7 +1249,7 @@ function InvestTab({debts,isPlus,onUpgrade}){
   const addAcct=()=>{if(!form.name||!form.balance)return;const bal=Math.abs(parseFloat(form.balance)||0);if(!isFinite(bal))return;setAccounts(a=>[...a,{id:Date.now(),name:form.name,balance:bal,type:form.type,color:{Retirement:C.success,Brokerage:C.blue,Savings:C.yellow,Crypto:C.purple}[form.type]||C.blue}]);setForm({name:"",balance:"",type:"Retirement"});setShowAdd(false);};
 
   return(
-    <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
       <div className="subnav">
         {[{id:"vs",l:"Debt vs Invest"},{id:"steps",l:"What to do first"},{id:"accounts",l:"My accounts"}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
@@ -1373,7 +1371,7 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
   };
 
   return(
-    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
       <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
         <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
           {[{id:"score",l:"Health Score"},{id:"credit",l:"Credit Score"},{id:"ai",l:`AI Advisor${!isPlus?" ✦":""}`}].map(s=>(
@@ -1810,7 +1808,7 @@ export default function App(){
 function HealthAndLearnTab({completedLessons,onCompleteLesson,onOpenLesson,debts,isPlus,onUpgrade,score,setScore,assets,income,efund}){
   const [sub,setSub]=useState("lessons");
   return(
-    <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
       <div className="subnav" style={{background:C.surface}}>
         {[{id:"lessons",l:"Money 101"},{id:"health",l:"Health"},{id:"credit",l:"Credit"},{id:"ai",l:`AI${!isPlus?" ✦":""}`}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
