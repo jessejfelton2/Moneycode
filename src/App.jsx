@@ -900,15 +900,14 @@ function DebtsTab({debts,setDebts,openModal,pop,onEdit}){
 }
 
 // ── PLAN TAB ──────────────────────────────────────────────────────────────────
-function PlanTab({debts,isPlus,onUpgrade}){
+function PlanTab({debts,isPlus,onUpgrade,income,setIncome}){
   const [extra,setExtra]=useState(50);
   const [strat,setStrat]=useState("avalanche");
-  const [inc,setInc]=useState(2000);
   const total=debts.reduce((s,d)=>s+d.balance,0);
   const mins=debts.reduce((s,d)=>s+d.min,0);
   const mo=mins+extra>0?Math.min(Math.ceil(total/(mins+extra)),600):0;
   const totI=debts.reduce((s,d)=>s+(d.balance*d.rate/100/12*mo),0);
-  const dti=inc>0?mins/inc:0;
+  const dti=(income||0)>0?mins/(income||0):0;
   const moMin=mins>0?Math.min(Math.ceil(total/mins),600):0;
   const intMin=debts.reduce((s,d)=>s+(d.balance*d.rate/100/12*moMin),0);
   const saved=intMin-totI;
@@ -1008,7 +1007,7 @@ function PlanTab({debts,isPlus,onUpgrade}){
           </div>
           <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:9}}>
             <span style={{fontSize:11,color:C.muted}}>Monthly take-home $</span>
-            <input className="inp mono" type="number" value={inc} onChange={e=>setInc(parseInt(e.target.value)||0)} style={{width:110,padding:"6px 9px",fontSize:12}}/>
+            <input className="inp mono" type="number" value={income||""} onChange={e=>setIncome(parseFloat(e.target.value)||0)} placeholder="0" style={{width:110,padding:"6px 9px",fontSize:12}}/>
           </div>
           <div className="pbar" style={{marginBottom:6}}><div className="pfill" style={{width:`${Math.min(dti,1)*100}%`,background:dti>.4?C.red:dti>.2?C.yellow:C.success}}/></div>
           <div style={{fontSize:12}}>
@@ -1818,7 +1817,7 @@ export default function App(){
 
         {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("plan")}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
-        {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income}/>}
+        {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income} setIncome={setIncome}/>}
         {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop}/>}
         {tab==="learn"&&(
           <HealthAndLearnTab
