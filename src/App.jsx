@@ -35,11 +35,11 @@ input,select,textarea{font-size:16px!important;}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
-.app{max-width:430px;margin:0 auto;display:flex;flex-direction:column;position:relative;}
-.scroll{overflow-y:scroll;padding:14px 14px 96px;height:calc(100vh - 56px);-webkit-overflow-scrolling:touch;}
+.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+.scroll{overflow-y:auto;padding:14px 14px 96px;}
 .scroll::-webkit-scrollbar{display:none;}
 .mono{font-family:'DM Mono',monospace;}
-.tabbar{position:sticky;bottom:0;left:0;width:100%;background:#0F1520;border-top:1px solid #1E2D42;display:flex;z-index:100;margin-top:auto;}
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#0F1520;border-top:1px solid #1E2D42;display:flex;z-index:100;}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0 7px;gap:2px;cursor:pointer;border:none;background:none;color:#5B7087;font-size:8px;font-family:Inter,sans-serif;font-weight:600;letter-spacing:.05em;text-transform:uppercase;transition:color .15s;position:relative;}
 .tab.on{color:#B5FF4D;}
 .tab svg{width:18px;height:18px;}
@@ -747,11 +747,6 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
         </div>
         <div className="pbar"><div className="pfill" style={{width:`${health.overall}%`,background:health.color}}/></div>
       </div>
-
-      {/* Manage link */}
-      <button className="btn bg bfull bsm" style={{marginBottom:10,justifyContent:"space-between"}} onClick={onOpenManage}>
-        <span>📊 Budget · Net Worth · Invest · Plan</span><span style={{color:C.accent}}>→</span>
-      </button>
 
       {/* Freedom date */}
       {isPlus?(
@@ -1757,7 +1752,6 @@ export default function App(){
   const [tab,setTab]=useState("home");
   const [modal,setModal]=useState(null);
   const [editingDebt,setEditingDebt]=useState(null);
-  const [manageSub,setManageSub]=useState("plan");
   const [activeLesson,setActiveLesson]=useState(null);
   const [completedLessons,setCompletedLessons_]=useState(()=>load("mc_lessons",[]));
   const [debts,setDebts_]=useState(()=>load("mc_debts",[]));
@@ -1799,6 +1793,8 @@ export default function App(){
   const TABS=[
     {id:"home",  l:"Home",   Icon:I.Home},
     {id:"debts", l:"Debts",  Icon:I.Debt},
+    {id:"plan",  l:"Plan",   Icon:I.Plan},
+    {id:"money", l:"Money",  Icon:I.Money},
     {id:"learn", l:"Learn",  Icon:I.Learn},
   ];
 
@@ -1807,7 +1803,7 @@ export default function App(){
       <style>{CSS}</style>
       <div className="app">
 
-        {tab!=="learn"&&tab!=="manage"&&(
+        {tab!=="money"&&tab!=="learn"&&(
           <div className="hdr">
             <div className="logo">money<span style={{color:C.accent}}>code</span></div>
             <div style={{display:"flex",gap:7,alignItems:"center"}}>
@@ -1820,29 +1816,10 @@ export default function App(){
           </div>
         )}
 
-        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("manage")}/>}
+        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("plan")}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
-        {tab==="manage"&&(
-          <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
-            <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                <button className="btn bg bsm" onClick={()=>setTab("home")}>← Home</button>
-                <div style={{fontWeight:700,fontSize:14}}>Manage</div>
-              </div>
-              <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
-                {[{id:"plan",l:"Payoff Plan"},{id:"worth",l:"Net Worth"},{id:"budget",l:"Budget"},{id:"invest",l:"Invest"}].map(s=>(
-                  <button key={s.id} className={`snbtn${manageSub===s.id?" on":""}`} onClick={()=>setManageSub(s.id)}>{s.l}</button>
-                ))}
-              </div>
-            </div>
-            <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-              {manageSub==="plan"  &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
-              {manageSub==="worth" &&<WorthTab  debts={debts} assets={assets} setAssets={setAssets} pop={pop}/>}
-              {manageSub==="budget"&&<BudgetTab income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} debts={debts}/>}
-              {manageSub==="invest"&&<InvestTab debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
-            </div>
-          </div>
-        )}
+        {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
+        {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop}/>}
         {tab==="learn"&&(
           <HealthAndLearnTab
             completedLessons={completedLessons}
@@ -1855,7 +1832,7 @@ export default function App(){
 
         <nav className="tabbar">
           {TABS.map(t=>(
-            <button key={t.id} className={`tab${tab===t.id||(t.id==="home"&&tab==="manage")?" on":""}`} onClick={()=>setTab(t.id)}>
+            <button key={t.id} className={`tab${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>
               <t.Icon/>{t.l}
               {t.id==="learn"&&completedLessons.length<LESSONS.length&&<div style={{position:"absolute",top:7,right:"calc(50% - 14px)",width:5,height:5,borderRadius:"50%",background:C.accent}}/>}
             </button>
