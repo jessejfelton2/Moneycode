@@ -35,11 +35,11 @@ input,select,textarea{font-size:16px!important;}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
-.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
-.scroll{overflow-y:auto;padding:14px 14px 96px;}
+.app{max-width:430px;margin:0 auto;display:flex;flex-direction:column;position:relative;}
+.scroll{overflow-y:scroll;padding:14px 14px 96px;height:calc(100vh - 56px);-webkit-overflow-scrolling:touch;}
 .scroll::-webkit-scrollbar{display:none;}
 .mono{font-family:'DM Mono',monospace;}
-.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#0F1520;border-top:1px solid #1E2D42;display:flex;z-index:100;}
+.tabbar{position:sticky;bottom:0;left:0;width:100%;background:#0F1520;border-top:1px solid #1E2D42;display:flex;z-index:100;margin-top:auto;}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0 7px;gap:2px;cursor:pointer;border:none;background:none;color:#5B7087;font-size:8px;font-family:Inter,sans-serif;font-weight:600;letter-spacing:.05em;text-transform:uppercase;transition:color .15s;position:relative;}
 .tab.on{color:#B5FF4D;}
 .tab svg{width:18px;height:18px;}
@@ -94,7 +94,7 @@ body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-fon
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @keyframes slideup{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.ob{min-height:100vh;display:flex;flex-direction:column;padding:40px 20px 36px;overflow-y:auto;}
+.ob{height:100vh;display:flex;flex-direction:column;padding:40px 20px 36px;overflow-y:auto;box-sizing:border-box;}
 .opip{height:3px;flex:1;border-radius:2px;background:#1E2D42;transition:background .3s;}
 .opip.on{background:#B5FF4D;}
 .oopt{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #1E2D42;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#141B27;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
@@ -131,6 +131,7 @@ body{background:#080C12;color:#E6EDF3;font-family:'Inter',sans-serif;-webkit-fon
 .real-life{background:linear-gradient(135deg,#141B27,#1A1200);border:1px solid #FFD16630;border-radius:10px;padding:11px 13px;margin-top:8px;font-size:12px;color:#FFD166;line-height:1.5;}
 .goal-bar{height:6px;border-radius:3px;overflow:hidden;background:#1E2D42;margin:7px 0 4px;}
 .ring{position:relative;width:150px;height:150px;margin:0 auto 12px;}
+select{font-size:16px!important;}
 .rinv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 `;
 
@@ -654,7 +655,7 @@ function LearnTab({completedLessons, onComplete, onOpenLesson}){
 }
 
 // ── HOME TAB ──────────────────────────────────────────────────────────────────
-function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund}){
+function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage}){
   const total=debts.reduce((s,d)=>s+d.balance,0);
   const orig=debts.reduce((s,d)=>s+d.original,0);
   const mins=debts.reduce((s,d)=>s+d.min,0);
@@ -747,6 +748,11 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
         <div className="pbar"><div className="pfill" style={{width:`${health.overall}%`,background:health.color}}/></div>
       </div>
 
+      {/* Manage link */}
+      <button className="btn bg bfull bsm" style={{marginBottom:10,justifyContent:"space-between"}} onClick={onOpenManage}>
+        <span>📊 Budget · Net Worth · Invest · Plan</span><span style={{color:C.accent}}>→</span>
+      </button>
+
       {/* Freedom date */}
       {isPlus?(
         <div className="fhero">
@@ -767,6 +773,37 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
           </div>
         </div>
       )}
+
+      {/* Your next move */}
+      {debts.length>0&&(()=>{
+        const highRate=debts.length>0?[...debts].sort((a,b)=>b.rate-a.rate)[0]:null;
+        const cards=debts.filter(d=>d.type==="credit");
+        const lim=cards.reduce((s,d)=>s+d.original,0);
+        const bal=cards.reduce((s,d)=>s+d.balance,0);
+        const util=lim>0?(bal/lim)*100:0;
+        const efGoal=income*3;
+        const needsEfund=efund<500;
+        const needsUtil=util>30;
+        const move=needsEfund
+          ?{icon:"🛡️",title:"Build your emergency fund first",body:`You have ${fmt(efund)} saved. Getting to $500 protects you from putting the next emergency on a credit card.`,action:"Set a savings goal",color:C.blue,tab:"manage",sub:"budget"}
+          :needsUtil
+          ?{icon:"💳",title:`Pay down your ${cards[0]?.name||"credit card"}`,body:`Your credit card usage is at ${Math.round(util)}% of your limit. Getting under 30% could improve your credit score this month.`,action:"See payoff plan",color:C.yellow,tab:"manage",sub:"plan"}
+          :highRate&&highRate.rate>15
+          ?{icon:"🔥",title:`Attack ${highRate.name}`,body:`At ${highRate.rate}% interest, this is costing you ${fmt(highRate.balance*highRate.rate/100/12)}/month just in interest. Put every extra dollar here.`,action:"See attack plan",color:C.red,tab:"manage",sub:"plan"}
+          :{icon:"📈",title:"You're on track — keep going",body:`You've paid off ${fmt(debts.reduce((s,d)=>s+d.original,0)-debts.reduce((s,d)=>s+d.balance,0))} so far. Stay consistent and you'll be debt-free by ${toDate(income>0?Math.ceil(debts.reduce((s,d)=>s+d.balance,0)/(debts.reduce((s,d)=>s+d.min,0)*1.3)):0)}.`,action:"See full plan",color:C.success,tab:"manage",sub:"plan"};
+        return(
+          <div style={{marginBottom:12}}>
+            <p className="lbl">Your next move</p>
+            <div className="card" style={{borderColor:move.color+"44",background:`linear-gradient(135deg,#141B27,#0F1520)`}}>
+              <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:10}}>
+                <span style={{fontSize:24,flexShrink:0}}>{move.icon}</span>
+                <div><div style={{fontWeight:700,fontSize:14,marginBottom:4}}>{move.title}</div><div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>{move.body}</div></div>
+              </div>
+              <button className="btn bp bfull bsm" onClick={()=>{onOpenManage();}}>{move.action} →</button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Milestones */}
       <p className="lbl">Milestones</p>
@@ -1674,6 +1711,24 @@ function CSVModal({onClose,onImport}){
   );
 }
 
+
+// ── RESET MODAL ───────────────────────────────────────────────────────────────
+function ResetModal({onClose,onConfirm}){
+  return(
+    <div className="mover" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="mo">
+        <div className="hdl"/>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Reset everything?</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}>This will delete all your debts, assets, and settings. You'll start fresh from onboarding. This can't be undone.</div>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn bg" style={{flex:1}} onClick={onClose}>Cancel</button>
+          <button className="btn" style={{flex:1,background:C.red,color:"#fff"}} onClick={onConfirm}>Yes, reset</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PaywallModal({onClose,onUpgrade}){
   const FEATS=[["💬","AI Advisor that knows your situation","Ask anything — real answers, plain English"],["📅","Freedom Date","The exact month you'll be debt-free"],["📊","Debt-to-income tracker","Know if you're carrying too much debt"],["📈","AI credit analysis","Specific moves to improve your score"],["🎉","Milestones","Celebrate every win along the way"]];
   return(
@@ -1702,6 +1757,7 @@ export default function App(){
   const [tab,setTab]=useState("home");
   const [modal,setModal]=useState(null);
   const [editingDebt,setEditingDebt]=useState(null);
+  const [manageSub,setManageSub]=useState("plan");
   const [activeLesson,setActiveLesson]=useState(null);
   const [completedLessons,setCompletedLessons_]=useState(()=>load("mc_lessons",[]));
   const [debts,setDebts_]=useState(()=>load("mc_debts",[]));
@@ -1743,8 +1799,6 @@ export default function App(){
   const TABS=[
     {id:"home",  l:"Home",   Icon:I.Home},
     {id:"debts", l:"Debts",  Icon:I.Debt},
-    {id:"plan",  l:"Plan",   Icon:I.Plan},
-    {id:"money", l:"Money",  Icon:I.Money},
     {id:"learn", l:"Learn",  Icon:I.Learn},
   ];
 
@@ -1753,7 +1807,7 @@ export default function App(){
       <style>{CSS}</style>
       <div className="app">
 
-        {tab!=="money"&&tab!=="learn"&&(
+        {tab!=="learn"&&tab!=="manage"&&(
           <div className="hdr">
             <div className="logo">money<span style={{color:C.accent}}>code</span></div>
             <div style={{display:"flex",gap:7,alignItems:"center"}}>
@@ -1766,10 +1820,29 @@ export default function App(){
           </div>
         )}
 
-        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund}/>}
+        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("manage")}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
-        {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
-        {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop}/>}
+        {tab==="manage"&&(
+          <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
+            <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <button className="btn bg bsm" onClick={()=>setTab("home")}>← Home</button>
+                <div style={{fontWeight:700,fontSize:14}}>Manage</div>
+              </div>
+              <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
+                {[{id:"plan",l:"Payoff Plan"},{id:"worth",l:"Net Worth"},{id:"budget",l:"Budget"},{id:"invest",l:"Invest"}].map(s=>(
+                  <button key={s.id} className={`snbtn${manageSub===s.id?" on":""}`} onClick={()=>setManageSub(s.id)}>{s.l}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+              {manageSub==="plan"  &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
+              {manageSub==="worth" &&<WorthTab  debts={debts} assets={assets} setAssets={setAssets} pop={pop}/>}
+              {manageSub==="budget"&&<BudgetTab income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} debts={debts}/>}
+              {manageSub==="invest"&&<InvestTab debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
+            </div>
+          </div>
+        )}
         {tab==="learn"&&(
           <HealthAndLearnTab
             completedLessons={completedLessons}
@@ -1782,7 +1855,7 @@ export default function App(){
 
         <nav className="tabbar">
           {TABS.map(t=>(
-            <button key={t.id} className={`tab${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>
+            <button key={t.id} className={`tab${tab===t.id||(t.id==="home"&&tab==="manage")?" on":""}`} onClick={()=>setTab(t.id)}>
               <t.Icon/>{t.l}
               {t.id==="learn"&&completedLessons.length<LESSONS.length&&<div style={{position:"absolute",top:7,right:"calc(50% - 14px)",width:5,height:5,borderRadius:"50%",background:C.accent}}/>}
             </button>
@@ -1793,6 +1866,7 @@ export default function App(){
         {editingDebt    &&<EditDebtModal debt={editingDebt} onClose={()=>setEditingDebt(null)} onSave={d=>{setDebts(x=>x.map(v=>v.id===d.id?d:v));setEditingDebt(null);pop("Updated");}}/>}
         {modal==="sync"  &&<SyncModal    debts={debts} onClose={()=>setModal(null)} onSync={u=>{setDebts(d=>d.map(x=>{const f=u.find(v=>v.id===x.id);return f?{...x,balance:Math.max(0,f.next)}:x;}));pop("Balances updated");}}/>}
         {modal==="import"&&<CSVModal     onClose={()=>setModal(null)} onImport={d=>{setDebts(x=>[...x,...d]);pop(`${d.length} debts imported`);}}/>}
+        {modal==="reset" &&<ResetModal   onClose={()=>setModal(null)} onConfirm={()=>{localStorage.clear();window.location.reload();}}/>}
         {showPW          &&<PaywallModal onClose={()=>setShowPW(false)} onUpgrade={upgrade}/>}
 
         {activeLesson&&<LessonScreen lesson={activeLesson} onClose={()=>setActiveLesson(null)} onComplete={id=>{setCompletedLessons(x=>[...x.filter(v=>v!==id),id]);pop("Lesson complete! 🎓","🎓");}}/>}
