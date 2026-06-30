@@ -1038,15 +1038,15 @@ function PlanTab({debts,isPlus,onUpgrade}){
 function MoneyTab({debts,assets,setAssets,income,setIncome,efund,setEfund,isPlus,onUpgrade,pop}){
   const [sub,setSub]=useState("worth");
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
-      <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
+    <div style={{display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"12px 14px 0",background:C.surface,position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
           {[{id:"worth",l:"Net Worth"},{id:"budget",l:"Budget"},{id:"invest",l:"Invest"}].map(s=>(
             <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
           ))}
         </div>
       </div>
-      <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+      <div>
         {sub==="worth" &&<WorthTab  debts={debts} assets={assets} setAssets={setAssets} pop={pop}/>}
         {sub==="budget"&&<BudgetTab income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} debts={debts}/>}
         {sub==="invest"&&<InvestTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade}/>}
@@ -1281,8 +1281,8 @@ function InvestTab({debts,isPlus,onUpgrade}){
   const addAcct=()=>{if(!form.name||!form.balance)return;const bal=Math.abs(parseFloat(form.balance)||0);if(!isFinite(bal))return;setAccounts(a=>[...a,{id:Date.now(),name:form.name,balance:bal,type:form.type,color:{Retirement:C.success,Brokerage:C.blue,Savings:C.yellow,Crypto:C.purple}[form.type]||C.blue}]);setForm({name:"",balance:"",type:"Retirement"});setShowAdd(false);};
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
-      <div className="subnav">
+    <div style={{display:"flex",flexDirection:"column"}}>
+      <div className="subnav" style={{position:"sticky",top:0,zIndex:10}}>
         {[{id:"vs",l:"Debt vs Invest"},{id:"steps",l:"What to do first"},{id:"accounts",l:"My accounts"}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
         ))}
@@ -1403,8 +1403,8 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
   };
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
-      <div style={{padding:"12px 14px 0",background:C.surface,flexShrink:0}}>
+    <div style={{display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"12px 14px 0",background:C.surface,position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",gap:4,borderBottom:`1px solid ${C.border}`}}>
           {[{id:"score",l:"Health Score"},{id:"credit",l:"Credit Score"},{id:"ai",l:`AI Advisor${!isPlus?" ✦":""}`}].map(s=>(
             <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
@@ -1519,7 +1519,7 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
       </div>}
 
       {sub==="ai"&&(isPlus?(
-        <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
+        <div style={{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 120px)"}}>
           <div style={{flex:1,overflowY:"auto",padding:"12px 14px 8px"}}>
             <div style={{marginBottom:10}}><div style={{fontSize:14,fontWeight:700}}>AI Advisor</div><div style={{fontSize:11,color:C.muted}}>Real answers. No judgment. Plain English.</div></div>
             <div style={{display:"flex",flexDirection:"column"}}>
@@ -1818,7 +1818,7 @@ export default function App(){
 
         {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("plan")}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
-        {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
+        {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income}/>}
         {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop}/>}
         {tab==="learn"&&(
           <HealthAndLearnTab
@@ -1855,22 +1855,191 @@ export default function App(){
   );
 }
 
+
+// ── INVESTMENT CALCULATOR ─────────────────────────────────────────────────────
+function InvestCalcTab(){
+  const [monthly,setMonthly]=useState(100);
+  const [age,setAge]=useState(22);
+  const [retireAge,setRetireAge]=useState(65);
+  const [rate,setRate]=useState(10);
+  const [lump,setLump]=useState(0);
+
+  const years=Math.max(0,retireAge-age);
+  const r=rate/100/12;
+  const n=years*12;
+
+  // Future value of monthly contributions + lump sum
+  const fvMonthly = r>0 ? monthly*((Math.pow(1+r,n)-1)/r) : monthly*n;
+  const fvLump = lump*Math.pow(1+rate/100,years);
+  const total = fvMonthly + fvLump;
+  const totalContributed = monthly*n + lump;
+  const gains = total - totalContributed;
+
+  // Build chart data — value at each decade
+  const chartPoints = [];
+  for(let y=0;y<=years;y+=Math.max(1,Math.floor(years/8))){
+    const ny=y*12;
+    const fv = r>0 ? monthly*((Math.pow(1+r,ny)-1)/r) : monthly*ny;
+    const fl = lump*Math.pow(1+rate/100,y);
+    chartPoints.push({year:age+y,value:Math.round(fv+fl)});
+  }
+  if(chartPoints[chartPoints.length-1]?.year !== retireAge){
+    chartPoints.push({year:retireAge,value:Math.round(total)});
+  }
+  const maxVal = Math.max(...chartPoints.map(p=>p.value),1);
+
+  const fmt2 = n => {
+    if(n>=1000000) return "$"+(n/1000000).toFixed(1)+"M";
+    if(n>=1000) return "$"+Math.round(n/1000)+"k";
+    return "$"+Math.round(n);
+  };
+
+  return(
+    <div className="scroll">
+      <div style={{fontSize:13,color:C.muted,marginBottom:14,lineHeight:1.6}}>
+        See how much your money can grow over time. Small amounts invested early make a massive difference.
+      </div>
+
+      {/* Result hero */}
+      <div className="card" style={{background:"linear-gradient(135deg,#141B27,#0F1A14)",borderColor:C.success+"44",textAlign:"center",padding:20,marginBottom:12}}>
+        <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
+          At age {retireAge} you could have
+        </div>
+        <div className="mono" style={{fontSize:38,fontWeight:500,color:C.success,letterSpacing:"-.02em"}}>{fmt2(total)}</div>
+        <div style={{fontSize:11,color:C.muted,marginTop:5}}>
+          from {fmt2(totalContributed)} invested → <span style={{color:C.accent,fontWeight:600}}>{fmt2(gains)} in gains</span>
+        </div>
+      </div>
+
+      {/* Bar chart */}
+      <div className="card" style={{marginBottom:12}}>
+        <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:12}}>Growth over time</div>
+        <div style={{display:"flex",alignItems:"flex-end",gap:4,height:100,marginBottom:6}}>
+          {chartPoints.map((p,i)=>(
+            <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <div style={{fontSize:8,color:C.muted,fontWeight:600}}>{fmt2(p.value)}</div>
+              <div style={{width:"100%",background:`linear-gradient(to top,${C.success},${C.accent})`,borderRadius:"3px 3px 0 0",height:`${Math.max(4,(p.value/maxVal)*84)}px`,transition:"height .6s ease"}}/>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:C.muted,borderTop:`1px solid ${C.border}`,paddingTop:6}}>
+          {chartPoints.filter((_,i)=>i===0||i===Math.floor(chartPoints.length/2)||i===chartPoints.length-1).map(p=>(
+            <span key={p.year}>Age {p.year}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Inputs */}
+      <p className="lbl">Adjust the numbers</p>
+      <div className="card" style={{marginBottom:10}}>
+        <div className="fld">
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+            <div className="flb">Monthly contribution</div>
+            <span className="mono" style={{fontSize:13,color:C.accent}}>${monthly}</span>
+          </div>
+          <input className="sli" type="range" min="0" max="2000" step="25" value={monthly} onChange={e=>setMonthly(parseInt(e.target.value))}/>
+          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:7}}>
+            {[25,50,100,200,500].map(v=><button key={v} className={`btn bsm ${monthly===v?"bp":"bg"}`} onClick={()=>setMonthly(v)}>${v}</button>)}
+          </div>
+        </div>
+
+        <div className="fld" style={{marginTop:4}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+            <div className="flb">Lump sum to start (optional)</div>
+            <span className="mono" style={{fontSize:13,color:C.accent}}>${lump.toLocaleString()}</span>
+          </div>
+          <input className="sli" type="range" min="0" max="50000" step="500" value={lump} onChange={e=>setLump(parseInt(e.target.value))}/>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:4}}>
+          <div className="fld">
+            <div className="flb">Your age</div>
+            <input className="inp mono" type="number" min="10" max="80" value={age} onChange={e=>setAge(Math.min(80,Math.max(10,parseInt(e.target.value)||22)))}/>
+          </div>
+          <div className="fld">
+            <div className="flb">Retire at age</div>
+            <input className="inp mono" type="number" min="30" max="90" value={retireAge} onChange={e=>setRetireAge(Math.min(90,Math.max(age+1,parseInt(e.target.value)||65)))}/>
+          </div>
+        </div>
+
+        <div className="fld">
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+            <div className="flb">Expected annual return</div>
+            <span className="mono" style={{fontSize:13,color:rate>=10?C.success:rate>=7?C.accent:C.yellow}}>{rate}%</span>
+          </div>
+          <input className="sli" type="range" min="1" max="15" step="0.5" value={rate} onChange={e=>setRate(parseFloat(e.target.value))}/>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.muted,marginTop:4}}>
+            <span>Conservative (4–6%)</span>
+            <span>S&P 500 avg (~10%)</span>
+            <span>Aggressive (12–15%)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Comparison table */}
+      <p className="lbl">What if you started later?</p>
+      <div className="card" style={{marginBottom:12}}>
+        {[0,5,10].map(delay=>{
+          const yrs=Math.max(0,years-delay);
+          const nd=yrs*12;
+          const fvM=r>0?monthly*((Math.pow(1+r,nd)-1)/r):monthly*nd;
+          const fvL=lump*Math.pow(1+rate/100,yrs);
+          const tot=fvM+fvL;
+          const contrib=monthly*nd+lump;
+          return(
+            <div key={delay} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:delay<10?`1px solid ${C.border}`:"none"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:12,color:delay===0?C.accent:C.text}}>{delay===0?"Start now":`Start in ${delay} years (age ${age+delay})`}</div>
+                <div style={{fontSize:10,color:C.muted,marginTop:1}}>Contributing for {yrs} years</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div className="mono" style={{fontSize:14,fontWeight:500,color:delay===0?C.success:C.muted}}>{fmt2(tot)}</div>
+                {delay>0&&<div style={{fontSize:10,color:C.red,marginTop:1}}>-{fmt2(total-tot)} less</div>}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{marginTop:10,padding:"9px 11px",background:C.accent+"10",borderRadius:8,border:`1px solid ${C.accent}30`,fontSize:12,color:C.accent,fontWeight:600,lineHeight:1.5}}>
+          ⏰ Waiting just 5 years costs you {fmt2(total-(()=>{const y2=Math.max(0,years-5)*12;const fv=r>0?monthly*((Math.pow(1+r,y2)-1)/r):monthly*y2;return fv+lump*Math.pow(1+rate/100,Math.max(0,years-5));})())} in potential gains.
+        </div>
+      </div>
+
+      {/* Rule of 72 */}
+      <p className="lbl">The Rule of 72</p>
+      <div className="card">
+        <div style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:8}}>
+          Divide 72 by your interest rate to find out how many years it takes to double your money.
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <div style={{flex:1,background:C.surface,borderRadius:8,padding:"10px 12px",border:`1px solid ${C.border}`,textAlign:"center"}}>
+            <div className="mono" style={{fontSize:20,color:C.accent,fontWeight:500}}>{(72/rate).toFixed(1)} yrs</div>
+            <div style={{fontSize:10,color:C.muted,marginTop:3}}>to double at {rate}%</div>
+          </div>
+          <div style={{flex:1,background:C.surface,borderRadius:8,padding:"10px 12px",border:`1px solid ${C.border}`,textAlign:"center"}}>
+            <div className="mono" style={{fontSize:20,color:C.success,fontWeight:500}}>{Math.floor(years/(72/rate))}x</div>
+            <div style={{fontSize:10,color:C.muted,marginTop:3}}>doubles by age {retireAge}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Combined Health + Learn tab ───────────────────────────────────────────────
 function HealthAndLearnTab({completedLessons,onCompleteLesson,onOpenLesson,debts,isPlus,onUpgrade,score,setScore,assets,income,efund}){
   const [sub,setSub]=useState("lessons");
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)"}}>
-      <div className="subnav" style={{background:C.surface}}>
-        {[{id:"lessons",l:"Money 101"},{id:"health",l:"Health"},{id:"credit",l:"Credit"},{id:"ai",l:`AI${!isPlus?" ✦":""}`}].map(s=>(
+    <div style={{display:"flex",flexDirection:"column"}}>
+      <div className="subnav" style={{background:C.surface,position:"sticky",top:0,zIndex:10}}>
+        {[{id:"lessons",l:"Money 101"},{id:"health",l:"Health"},{id:"credit",l:"Credit"},{id:"calculator",l:"Calculator"},{id:"ai",l:`AI${!isPlus?" ✦":""}`}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
         ))}
       </div>
-      <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-        {sub==="lessons"&&<LearnTab completedLessons={completedLessons} onComplete={onCompleteLesson} onOpenLesson={onOpenLesson}/>}
-        {sub==="health" &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="score"/>}
-        {sub==="credit" &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="credit"/>}
-        {sub==="ai"     &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="ai"/>}
-      </div>
+      {sub==="lessons"   &&<LearnTab completedLessons={completedLessons} onComplete={onCompleteLesson} onOpenLesson={onOpenLesson}/>}
+      {sub==="health"    &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="score"/>}
+      {sub==="credit"    &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="credit"/>}
+      {sub==="calculator"&&<InvestCalcTab/>}
+      {sub==="ai"        &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="ai"/>}
     </div>
   );
 }
