@@ -253,10 +253,14 @@ function Onboarding({onDone}){
   const [hasJob,setHasJob]=useState(null);
   const [income,setIncome]=useState("");
 
+  const maxStep=hasDebts?4:4;
   const next=()=>{
     if(step===0&&!name.trim())return;
-    if(step<3)setStep(s=>s+1);
-    else onDone({name,hasDebts,hasJob,income:parseFloat(income)||0});
+    if(step<maxStep)setStep(s=>s+1);
+    else{
+      const debt=firstDebt.name&&firstDebt.balance?[{id:Date.now(),name:firstDebt.name,balance:parseFloat(firstDebt.balance)||0,original:parseFloat(firstDebt.balance)||0,rate:parseFloat(firstDebt.rate)||0,min:parseFloat(firstDebt.min)||0,type:firstDebt.type,color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[firstDebt.type]||C.blue}]:[];
+      onDone({name,hasDebts,hasJob,income:parseFloat(income)||0,firstDebt:debt});
+    }
   };
 
   return (
@@ -266,7 +270,7 @@ function Onboarding({onDone}){
         {step>0&&<button className="btn bg bsm" onClick={()=>setStep(s=>s-1)}>← Back</button>}
       </div>
       <div style={{display:"flex",gap:4,marginBottom:28}}>
-        {[0,1,2,3].map(i=><div key={i} className={`opip${i<=step?" on":""}`}/>)}
+        {[0,1,2,3,4].map(i=><div key={i} className={`opip${i<=step?" on":""}`}/>)}
       </div>
 
       {step===0&&<>
@@ -655,7 +659,7 @@ function LearnTab({completedLessons, onComplete, onOpenLesson}){
 }
 
 // ── HOME TAB ──────────────────────────────────────────────────────────────────
-function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage}){
+function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage,onShowCert}){
   const total=debts.reduce((s,d)=>s+d.balance,0);
   const orig=debts.reduce((s,d)=>s+d.original,0);
   const mins=debts.reduce((s,d)=>s+d.min,0);
@@ -812,6 +816,7 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
         ))}
       </div>
       {done.length>0&&<button className="btn bg bsm bfull" style={{marginTop:6}} onClick={()=>onCelebrate(done[done.length-1])}>🎉 Celebrate a milestone</button>}
+      {debts.length>0&&debts.every(d=>d.balance<=0)&&<button className="btn bp bfull bsm" style={{marginTop:6}} onClick={onShowCert}>🏆 Get your debt-free certificate</button>}
     </div>
   );
 }
@@ -1553,6 +1558,212 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
 }
 
 // ── Modals ────────────────────────────────────────────────────────────────────
+
+// ── BILL CALENDAR ─────────────────────────────────────────────────────────────
+function BillCalendar({debts}){
+  const now=new Date();
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const firstDay=new Date(now.getFullYear(),now.getMonth(),1).getDay();
+  const today=now.getDate();
+  const billMap={};
+  debts.filter(d=>d.due).forEach(d=>{ if(!billMap[d.due]) billMap[d.due]=[]; billMap[d.due].push(d); });
+  const upcoming=debts.filter(d=>d.due).sort((a,b)=>a.due-b.due).map(d=>({...d,daysLeft:d.due>=today?d.due-today:daysInMonth-today+d.due})).sort((a,b)=>a.daysLeft-b.daysLeft);
+  return(
+    <div className="scroll">
+      <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>{now.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
+      <div style={{fontSize:12,color:C.muted,marginBottom:14}}>{debts.filter(d=>d.due).length} bills tracked this month</div>
+      {/* Calendar grid */}
+      <div className="card" style={{marginBottom:12}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:8}}>
+          {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d=><div key={d} style={{textAlign:"center",fontSize:9,color:C.muted,fontWeight:700,padding:"3px 0"}}>{d}</div>)}
+          {Array.from({length:firstDay}).map((_,i)=><div key={`e${i}`}/>)}
+          {Array.from({length:daysInMonth}).map((_,i)=>{
+            const day=i+1;
+            const bills=billMap[day]||[];
+            const isToday=day===today;
+            const isPast=day<today;
+            return(
+              <div key={day} style={{aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:7,background:bills.length?C.red+"22":isToday?C.accent+"22":"transparent",border:isToday?`1px solid ${C.accent}`:bills.length?`1px solid ${C.red}44`:"none",position:"relative",opacity:isPast&&!isToday?.5:1}}>
+                <span style={{fontSize:11,fontWeight:isToday?700:bills.length?600:400,color:bills.length?C.red:isToday?C.accent:C.text}}>{day}</span>
+                {bills.length>0&&<div style={{width:4,height:4,borderRadius:"50%",background:C.red,position:"absolute",bottom:3}}/>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {/* Upcoming bills */}
+      <p className="lbl">Upcoming payments</p>
+      {upcoming.length===0?(
+        <div className="card" style={{textAlign:"center",padding:20}}>
+          <div style={{fontSize:28,marginBottom:8}}>📅</div>
+          <div style={{fontWeight:600,fontSize:13,marginBottom:6}}>No due dates set</div>
+          <div style={{fontSize:12,color:C.muted}}>Edit any debt in the Debts tab and add a due date to see it here.</div>
+        </div>
+      ):upcoming.map(d=>(
+        <div key={d.id} className="card" style={{marginBottom:8,borderColor:d.daysLeft<=3?C.red+"66":d.daysLeft<=7?C.yellow+"44":"transparent"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontWeight:600,fontSize:13}}>{d.name}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>Due the {d.due}{d.due===1?"st":d.due===2?"nd":d.due===3?"rd":"th"} · {d.daysLeft===0?"Today!":d.daysLeft===1?"Tomorrow":`${d.daysLeft} days`}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div className="mono" style={{fontSize:14,color:d.daysLeft<=3?C.red:C.text}}>${d.min.toFixed(2)}</div>
+              {d.daysLeft<=3&&<div style={{fontSize:9,color:C.red,marginTop:2,fontWeight:700}}>DUE SOON</div>}
+            </div>
+          </div>
+        </div>
+      ))}
+      {/* Total due this month */}
+      {upcoming.length>0&&<div className="card" style={{borderColor:C.blue+"30"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div><div style={{fontWeight:700,fontSize:13}}>Total due this month</div><div style={{fontSize:11,color:C.muted,marginTop:1}}>{upcoming.length} payments</div></div>
+          <div className="mono" style={{fontSize:16,fontWeight:500,color:C.yellow}}>${upcoming.reduce((s,d)=>s+d.min,0).toFixed(2)}</div>
+        </div>
+      </div>}
+    </div>
+  );
+}
+
+// ── MILESTONE SHARE CARD ──────────────────────────────────────────────────────
+function MilestoneCard({milestone,name,debts,onClose}){
+  const total=debts.reduce((s,d)=>s+d.balance,0);
+  const orig=debts.reduce((s,d)=>s+d.original,0);
+  const paid=orig-total;
+  return(
+    <div className="mover" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="mo">
+        <div className="hdl"/>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:14}}>Share your win 🎉</div>
+        {/* The card itself */}
+        <div style={{background:"linear-gradient(135deg,#0F1520,#141B27)",border:`1px solid ${C.accent}44`,borderRadius:16,padding:24,marginBottom:16,textAlign:"center"}}>
+          <div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:12}}>money<span style={{color:C.accent}}>code</span></div>
+          <div style={{fontSize:44,marginBottom:10}}>{milestone.e}</div>
+          <div style={{fontSize:20,fontWeight:800,marginBottom:6,color:C.text}}>{milestone.t}</div>
+          <div style={{fontSize:13,color:C.muted,marginBottom:16}}>{name?`${name} has`:"I've"} paid off <span style={{color:C.accent,fontWeight:700}}>${Math.round(paid).toLocaleString()}</span> of debt</div>
+          <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+            <div style={{background:C.surface,borderRadius:10,padding:"10px 16px",border:`1px solid ${C.border}`}}>
+              <div className="mono" style={{fontSize:18,color:C.success,fontWeight:500}}>${Math.round(paid).toLocaleString()}</div>
+              <div style={{fontSize:9,color:C.muted,marginTop:2}}>PAID OFF</div>
+            </div>
+            <div style={{background:C.surface,borderRadius:10,padding:"10px 16px",border:`1px solid ${C.border}`}}>
+              <div className="mono" style={{fontSize:18,color:C.accent,fontWeight:500}}>{Math.round((paid/Math.max(orig,1))*100)}%</div>
+              <div style={{fontSize:9,color:C.muted,marginTop:2}}>COMPLETE</div>
+            </div>
+          </div>
+          <div style={{marginTop:14,fontSize:11,color:C.muted}}>moneycode.app</div>
+        </div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:14,textAlign:"center",lineHeight:1.6}}>Screenshot this card and share it. You earned it.</div>
+        <button className="btn bp bfull" onClick={onClose}>Done</button>
+      </div>
+    </div>
+  );
+}
+
+// ── CREDIT SCORE SIMULATOR ────────────────────────────────────────────────────
+function CreditSimulator({debts,score}){
+  const cards=debts.filter(d=>d.type==="credit");
+  const totalLim=cards.reduce((s,d)=>s+d.original,0);
+  const totalBal=cards.reduce((s,d)=>s+d.balance,0);
+  const currentUtil=totalLim>0?(totalBal/totalLim)*100:0;
+  const [simBal,setSimBal]=useState(totalBal);
+  const simUtil=totalLim>0?(simBal/totalLim)*100:0;
+  const utilDrop=currentUtil-simUtil;
+  const scoreBoost=utilDrop>30?Math.round(utilDrop*1.2):utilDrop>20?Math.round(utilDrop*0.9):utilDrop>10?Math.round(utilDrop*0.6):Math.round(utilDrop*0.3);
+  const simScore=Math.min(850,score+scoreBoost);
+
+  return(
+    <div className="scroll">
+      <div style={{fontSize:13,color:C.muted,marginBottom:14,lineHeight:1.6}}>
+        See how paying down debt could change your credit score. Drag the slider to simulate.
+      </div>
+      {/* Score comparison */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+        <div className="card" style={{textAlign:"center",padding:16}}>
+          <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Current score</div>
+          <div className="mono" style={{fontSize:32,fontWeight:500,color:score>=740?C.success:score>=670?C.accent:score>=580?C.yellow:C.red}}>{score}</div>
+        </div>
+        <div className="card" style={{textAlign:"center",padding:16,borderColor:simScore>score?C.success+"44":"transparent"}}>
+          <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>After paydown</div>
+          <div className="mono" style={{fontSize:32,fontWeight:500,color:simScore>=740?C.success:simScore>=670?C.accent:simScore>=580?C.yellow:C.red}}>{simScore}</div>
+          {scoreBoost>0&&<div style={{fontSize:10,color:C.success,marginTop:4,fontWeight:700}}>+{scoreBoost} pts</div>}
+        </div>
+      </div>
+
+      {cards.length===0?(
+        <div className="card" style={{textAlign:"center",padding:20}}>
+          <div style={{fontSize:28,marginBottom:8}}>💳</div>
+          <div style={{fontSize:13,color:C.muted}}>Add credit cards in the Debts tab to simulate score impact.</div>
+        </div>
+      ):<>
+        <p className="lbl">Simulate paying down your cards</p>
+        <div className="card" style={{marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+            <div><div style={{fontWeight:600,fontSize:13}}>Credit card balance</div><div style={{fontSize:11,color:C.muted,marginTop:1}}>of ${Math.round(totalLim).toLocaleString()} total limit</div></div>
+            <div style={{textAlign:"right"}}>
+              <div className="mono" style={{fontSize:14,color:simUtil>30?C.red:simUtil>10?C.yellow:C.success}}>${Math.round(simBal).toLocaleString()}</div>
+              <div style={{fontSize:10,color:C.muted,marginTop:1}}>{Math.round(simUtil)}% utilization</div>
+            </div>
+          </div>
+          <input className="sli" type="range" min="0" max={Math.ceil(totalBal)} step="50" value={simBal} onChange={e=>setSimBal(parseInt(e.target.value))}/>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.muted,marginTop:4}}>
+            <span>$0 (paid off)</span>
+            <span>${Math.round(totalBal).toLocaleString()} (current)</span>
+          </div>
+          {simUtil<=10&&<div style={{marginTop:10,padding:"8px 10px",background:C.success+"12",borderRadius:8,border:`1px solid ${C.success}30`,fontSize:12,color:C.success,fontWeight:600}}>✓ Under 10% — optimal utilization for maximum score impact</div>}
+          {simUtil>10&&simUtil<=30&&<div style={{marginTop:10,padding:"8px 10px",background:C.yellow+"12",borderRadius:8,border:`1px solid ${C.yellow}30`,fontSize:12,color:C.yellow}}>Get below 10% for maximum score boost</div>}
+          {simUtil>30&&<div style={{marginTop:10,padding:"8px 10px",background:C.red+"12",borderRadius:8,border:`1px solid ${C.red}30`,fontSize:12,color:C.red}}>High utilization — this is hurting your score significantly</div>}
+        </div>
+        <p className="lbl">Score impact by card</p>
+        <div className="card">
+          {cards.map((d,i)=>{
+            const util=d.original>0?(d.balance/d.original)*100:0;
+            return(
+              <div key={d.id} style={{padding:"10px 0",borderBottom:i<cards.length-1?`1px solid ${C.border}`:"none"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                  <div><div style={{fontWeight:600,fontSize:12}}>{d.name}</div><div style={{fontSize:10,color:C.muted,marginTop:1}}>${Math.round(d.balance).toLocaleString()} of ${Math.round(d.original).toLocaleString()} limit</div></div>
+                  <span className={`tag ${util>30?"tr":util>10?"ty":"tg"}`}>{Math.round(util)}%</span>
+                </div>
+                <div className="pbar"><div className="pfill" style={{width:`${Math.min(util,100)}%`,background:util>30?C.red:util>10?C.yellow:C.success}}/></div>
+                {util>30&&<div style={{fontSize:10,color:C.red,marginTop:4}}>Pay ${Math.round(d.balance-d.original*.1).toLocaleString()} to get under 10% → est. +{Math.round((util-10)*0.8)} pts</div>}
+              </div>
+            );
+          })}
+        </div>
+      </>}
+    </div>
+  );
+}
+
+// ── DEBT FREE CERTIFICATE ─────────────────────────────────────────────────────
+function DebtFreeCert({name,debts,onClose}){
+  const orig=debts.reduce((s,d)=>s+d.original,0);
+  const today=new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+  return(
+    <div className="mover" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="mo">
+        <div className="hdl"/>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:14}}>Your debt-free certificate 🏆</div>
+        <div style={{background:"linear-gradient(135deg,#0A1A0A,#141B27)",border:`2px solid ${C.success}`,borderRadius:16,padding:28,textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:10,color:C.success,fontWeight:700,textTransform:"uppercase",letterSpacing:".15em",marginBottom:16}}>Certificate of Achievement</div>
+          <div style={{fontSize:36,marginBottom:10}}>🏆</div>
+          <div style={{fontSize:11,color:C.muted,marginBottom:6}}>This certifies that</div>
+          <div style={{fontSize:24,fontWeight:800,color:C.text,marginBottom:6}}>{name||"You"}</div>
+          <div style={{fontSize:11,color:C.muted,marginBottom:16}}>has become completely</div>
+          <div style={{fontSize:28,fontWeight:800,color:C.success,marginBottom:16,letterSpacing:"-.02em"}}>DEBT FREE</div>
+          <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.6}}>Having paid off <span style={{color:C.accent,fontWeight:700}}>${Math.round(orig).toLocaleString()}</span> in total debt</div>
+          <div style={{borderTop:`1px solid ${C.success}44`,paddingTop:14,display:"flex",justifyContent:"center",gap:24}}>
+            <div><div style={{fontSize:10,color:C.muted}}>Date achieved</div><div style={{fontWeight:600,fontSize:12,marginTop:2,color:C.text}}>{today}</div></div>
+          </div>
+          <div style={{marginTop:16,fontSize:10,color:C.muted}}>money<span style={{color:C.accent}}>code</span> · moneycode.app</div>
+        </div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:14,textAlign:"center"}}>Screenshot this and keep it forever. You earned it.</div>
+        <button className="btn bp bfull" onClick={onClose}>Done</button>
+      </div>
+    </div>
+  );
+}
+
+// ── ONBOARDING WITH FIRST DEBT ────────────────────────────────────────────────
 // ── EDIT DEBT MODAL ───────────────────────────────────────────────────────────
 function EditDebtModal({debt, onClose, onSave}){
   const [f,setF]=useState({
@@ -1751,6 +1962,8 @@ export default function App(){
   const [tab,setTab]=useState("home");
   const [modal,setModal]=useState(null);
   const [editingDebt,setEditingDebt]=useState(null);
+  const [milestoneCard,setMilestoneCard]=useState(null);
+  const [showCert,setShowCert]=useState(false);
   const [activeLesson,setActiveLesson]=useState(null);
   const [completedLessons,setCompletedLessons_]=useState(()=>load("mc_lessons",[]));
   const [debts,setDebts_]=useState(()=>load("mc_debts",[]));
@@ -1784,6 +1997,7 @@ export default function App(){
       <Onboarding onDone={d=>{
         setName(d.name);
         if(d.income>0) setIncome(d.income);
+        if(d.firstDebt&&d.firstDebt.length>0) setDebts(d.firstDebt);
         setBoarded(true);
       }}/>
     </>
@@ -1815,7 +2029,7 @@ export default function App(){
           </div>
         )}
 
-        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("plan")}/>}
+        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("plan")} onShowCert={()=>setShowCert(true)}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
         {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income} setIncome={setIncome}/>}
         {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop}/>}
@@ -1848,7 +2062,9 @@ export default function App(){
         {activeLesson&&<LessonScreen lesson={activeLesson} onClose={()=>setActiveLesson(null)} onComplete={id=>{setCompletedLessons(x=>[...x.filter(v=>v!==id),id]);pop("Lesson complete! 🎓","🎓");}}/>}
 
         {toast&&<div className="toast" style={{animation:"tin .2s ease"}}><span style={{color:C.accent}}>{toast.icon}</span>{toast.msg}</div>}
-        {celebrate&&<><Confetti/><div className="cel" onClick={()=>setCel(null)}><div style={{fontSize:64,animation:"pop .5s cubic-bezier(.34,1.56,.64,1)"}}>{celebrate.e}</div><div style={{fontSize:20,fontWeight:800,textAlign:"center"}}>{celebrate.t}</div><div style={{fontSize:13,color:C.muted,textAlign:"center",lineHeight:1.5}}>{celebrate.s}<br/><span style={{color:C.accent}}>You're doing it.</span></div><button className="btn bp" style={{marginTop:7}}>Share this win</button></div></>}
+        {celebrate&&<><Confetti/><div className="cel" onClick={()=>setCel(null)}><div style={{fontSize:64,animation:"pop .5s cubic-bezier(.34,1.56,.64,1)"}}>{celebrate.e}</div><div style={{fontSize:20,fontWeight:800,textAlign:"center"}}>{celebrate.t}</div><div style={{fontSize:13,color:C.muted,textAlign:"center",lineHeight:1.5}}>{celebrate.s}<br/><span style={{color:C.accent}}>You're doing it.</span></div><div style={{display:"flex",gap:8,marginTop:8}}><button className="btn bp" onClick={()=>{setCel(null);setMilestoneCard(celebrate);}}>🎉 Share this win</button><button className="btn bg bsm" onClick={()=>setCel(null)}>Close</button></div></div></>}
+        {milestoneCard&&<MilestoneCard milestone={milestoneCard} name={name} debts={debts} onClose={()=>setMilestoneCard(null)}/>}
+        {showCert&&<DebtFreeCert name={name} debts={debts} onClose={()=>setShowCert(false)}/>}
       </div>
     </>
   );
@@ -2030,11 +2246,13 @@ function HealthAndLearnTab({completedLessons,onCompleteLesson,onOpenLesson,debts
   return(
     <div style={{display:"flex",flexDirection:"column"}}>
       <div className="subnav" style={{background:C.surface,position:"sticky",top:0,zIndex:10}}>
-        {[{id:"lessons",l:"Money 101"},{id:"health",l:"Health"},{id:"credit",l:"Credit"},{id:"calculator",l:"Calculator"},{id:"ai",l:`AI${!isPlus?" ✦":""}`}].map(s=>(
+        {[{id:"lessons",l:"Money 101"},{id:"health",l:"Health"},{id:"credit",l:"Credit"},{id:"calendar",l:"Calendar"},{id:"simulator",l:"Score Sim"},{id:"calculator",l:"Calculator"},{id:"ai",l:`AI${!isPlus?" ✦":""}`}].map(s=>(
           <button key={s.id} className={`snbtn${sub===s.id?" on":""}`} onClick={()=>setSub(s.id)}>{s.l}</button>
         ))}
       </div>
       {sub==="lessons"   &&<LearnTab completedLessons={completedLessons} onComplete={onCompleteLesson} onOpenLesson={onOpenLesson}/>}
+      {sub==="calendar"  &&<BillCalendar debts={debts}/>}
+      {sub==="simulator" &&<CreditSimulator debts={debts} score={score}/>}
       {sub==="health"    &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="score"/>}
       {sub==="credit"    &&<HealthTab debts={debts} isPlus={isPlus} onUpgrade={onUpgrade} score={score} setScore={setScore} assets={assets} income={income} efund={efund} defaultSub="credit"/>}
       {sub==="calculator"&&<InvestCalcTab/>}
