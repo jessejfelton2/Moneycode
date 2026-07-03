@@ -275,34 +275,34 @@ function Onboarding({onDone}){
       </div>
 
       {step===0&&<>
-        <div style={{fontSize:40,marginBottom:12}}>👋</div>
-        <div style={{fontSize:24,fontWeight:800,marginBottom:6,lineHeight:1.2}}>What's your name?</div>
+        <div style={{fontSize:32,marginBottom:10}}>👋</div>
+        <div style={{fontSize:22,fontWeight:800,marginBottom:6,lineHeight:1.2}}>What's your name?</div>
         <div style={{fontSize:14,color:C.muted,marginBottom:24,lineHeight:1.6}}>Moneycode teaches you how money actually works — while helping you fix yours.</div>
         <div className="fld"><input className="inp" placeholder="First name" value={name} onChange={e=>setName(e.target.value)} style={{fontSize:18,padding:"13px 14px"}}/></div>
         <button className="btn bp bfull" style={{padding:14,fontSize:15,marginTop:6}} disabled={!name.trim()} onClick={next}>Let's go →</button>
       </>}
 
       {step===1&&<>
-        <div style={{fontSize:40,marginBottom:12}}>💳</div>
-        <div style={{fontSize:24,fontWeight:800,marginBottom:6}}>Do you have any debt, {name}?</div>
-        <div style={{fontSize:14,color:C.muted,marginBottom:24,lineHeight:1.6}}>Credit cards, student loans, car payments — anything you owe money on counts.</div>
+        <div style={{fontSize:32,marginBottom:10}}>💳</div>
+        <div style={{fontSize:22,fontWeight:800,marginBottom:6}}>Do you have any debt, {name}?</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.6}}>Credit cards, student loans, car payments — anything you owe money on counts.</div>
         {[
           {id:true,  e:"✅", l:"Yes — I owe money on something", s:"Credit card, student loan, car payment, etc."},
           {id:false, e:"🙌", l:"No debt yet",                   s:"Great starting point — let's keep it that way"},
         ].map(o=>(
           <div key={String(o.id)} className={`oopt${hasDebts===o.id?" on":""}`} onClick={()=>setHasDebts(o.id)}>
             <span style={{fontSize:20,width:28}}>{o.e}</span>
-            <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{o.l}</div><div style={{fontSize:12,color:C.muted,marginTop:1}}>{o.s}</div></div>
-            {hasDebts===o.id&&<I.Check/>}
+            <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{o.l}</div><div style={{fontSize:11,color:C.muted,marginTop:1}}>{o.s}</div></div>
+            {hasDebts===o.id&&<span style={{color:C.accent,fontSize:14,flexShrink:0}}>✓</span>}
           </div>
         ))}
         <button className="btn bp bfull" style={{padding:13,marginTop:12}} disabled={hasDebts===null} onClick={next}>Continue →</button>
       </>}
 
       {step===2&&<>
-        <div style={{fontSize:40,marginBottom:12}}>💼</div>
-        <div style={{fontSize:24,fontWeight:800,marginBottom:6}}>Do you have a job?</div>
-        <div style={{fontSize:14,color:C.muted,marginBottom:24,lineHeight:1.6}}>Any income counts — full-time, part-time, gig work, even occasional cash jobs.</div>
+        <div style={{fontSize:32,marginBottom:10}}>💼</div>
+        <div style={{fontSize:22,fontWeight:800,marginBottom:6}}>Do you have a job?</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.6}}>Any income counts — full-time, part-time, gig work, even occasional cash jobs.</div>
         {[
           {id:"yes",      e:"💰", l:"Yes, I earn money regularly",  s:"Full-time, part-time, or gig work"},
           {id:"sometimes",e:"📊", l:"Sometimes — it varies",        s:"Freelance, seasonal, or irregular income"},
@@ -310,8 +310,8 @@ function Onboarding({onDone}){
         ].map(o=>(
           <div key={o.id} className={`oopt${hasJob===o.id?" on":""}`} onClick={()=>setHasJob(o.id)}>
             <span style={{fontSize:20,width:28}}>{o.e}</span>
-            <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{o.l}</div><div style={{fontSize:12,color:C.muted,marginTop:1}}>{o.s}</div></div>
-            {hasJob===o.id&&<I.Check/>}
+            <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{o.l}</div><div style={{fontSize:11,color:C.muted,marginTop:1}}>{o.s}</div></div>
+            {hasJob===o.id&&<span style={{color:C.accent,fontSize:14,flexShrink:0}}>✓</span>}
           </div>
         ))}
         <button className="btn bp bfull" style={{padding:13,marginTop:12}} disabled={!hasJob} onClick={next}>Continue →</button>
@@ -319,20 +319,43 @@ function Onboarding({onDone}){
 
       {step===3&&<>
         <div style={{fontSize:40,marginBottom:12}}>📊</div>
-        <div style={{fontSize:24,fontWeight:800,marginBottom:6}}>How much do you take home each month?</div>
-        <div style={{fontSize:14,color:C.muted,marginBottom:8,lineHeight:1.6}}>After taxes. This helps us figure out how much of your income goes to debt payments.</div>
-        <div className="card" style={{borderColor:C.blue+"40",marginBottom:16,padding:12}}>
-          <div style={{fontSize:12,color:C.blue,fontWeight:600,marginBottom:4}}>💡 Why does this matter?</div>
-          <div style={{fontSize:12,color:C.muted,lineHeight:1.5}}>Experts say debt payments should be under 20% of your take-home pay. We'll show you exactly where you stand.</div>
-        </div>
-        <div className="fld" style={{position:"relative"}}>
+        <div style={{fontSize:24,fontWeight:800,marginBottom:6}}>Monthly take-home pay?</div>
+        <div style={{fontSize:14,color:C.muted,marginBottom:8,lineHeight:1.6}}>After taxes. Used to calculate how much of your income goes to debt.</div>
+        <div className="fld" style={{position:"relative",marginTop:8}}>
           <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:C.muted,fontSize:15}}>$</span>
-          <input className="inp mono" type="number" placeholder="e.g. 1800" value={income} onChange={e=>setIncome(e.target.value)} style={{paddingLeft:24,fontSize:19,padding:"12px 12px 12px 24px"}}/>
+          <input className="inp mono" type="number" placeholder="e.g. 1800" value={income} onChange={e=>setIncome(e.target.value)} style={{paddingLeft:26,fontSize:19,padding:"13px 13px 13px 26px"}}/>
         </div>
-        {hasJob==="no"&&<div style={{fontSize:12,color:C.muted,marginBottom:12}}>Enter 0 if you don't have income right now — that's okay.</div>}
-        <button className="btn bp bfull" style={{padding:13}} onClick={next}>
-          {income?"Build my plan →":"Skip for now"}
-        </button>
+        {hasJob==="no"&&<div style={{fontSize:12,color:C.muted,marginBottom:12}}>Enter 0 if no income right now — that's okay.</div>}
+        <button className="btn bp bfull" style={{padding:13,marginTop:8}} onClick={next}>{income?"Continue →":"Skip for now"}</button>
+      </>}
+
+      {step===4&&hasDebts===true&&<>
+        <div style={{fontSize:40,marginBottom:12}}>💳</div>
+        <div style={{fontSize:24,fontWeight:800,marginBottom:6}}>Add your first debt</div>
+        <div style={{fontSize:14,color:C.muted,marginBottom:16,lineHeight:1.6}}>Add one now so we can build your plan. You can add more later.</div>
+        <div className="fld"><div className="flb">Name</div><input className="inp" placeholder="e.g. Chase Sapphire, Student Loan" value={firstDebt.name} onChange={e=>setFirstDebt(v=>({...v,name:e.target.value}))}/></div>
+        <div className="fld"><div className="flb">Type</div>
+          <select className="inp" value={firstDebt.type} onChange={e=>setFirstDebt(v=>({...v,type:e.target.value}))}>
+            <option value="credit">Credit card</option>
+            <option value="student">Student loan</option>
+            <option value="auto">Car loan</option>
+            <option value="personal">Personal loan</option>
+          </select>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+          <div className="fld"><div className="flb">Balance owed</div><input className="inp mono" type="number" placeholder="0.00" value={firstDebt.balance} onChange={e=>setFirstDebt(v=>({...v,balance:e.target.value}))}/></div>
+          <div className="fld"><div className="flb">Interest rate %</div><input className="inp mono" type="number" placeholder="e.g. 24.99" value={firstDebt.rate} onChange={e=>setFirstDebt(v=>({...v,rate:e.target.value}))}/></div>
+          <div className="fld"><div className="flb">Min. payment</div><input className="inp mono" type="number" placeholder="0.00" value={firstDebt.min} onChange={e=>setFirstDebt(v=>({...v,min:e.target.value}))}/></div>
+        </div>
+        <button className="btn bp bfull" style={{padding:13}} disabled={!firstDebt.name||!firstDebt.balance} onClick={finish}>Build my plan →</button>
+        <button className="btn bg bfull bsm" style={{marginTop:8}} onClick={finish}>Skip — add debts later</button>
+      </>}
+
+      {step===4&&hasDebts===false&&<>
+        <div style={{fontSize:40,marginBottom:12}}>🚀</div>
+        <div style={{fontSize:24,fontWeight:800,marginBottom:6}}>You're all set{name?`, ${name}`:""}!</div>
+        <div style={{fontSize:14,color:C.muted,marginBottom:24,lineHeight:1.6}}>No debt is a great starting point. We'll help you build credit, grow savings, and invest smart.</div>
+        <button className="btn bp bfull" style={{padding:13}} onClick={finish}>Let's go →</button>
       </>}
     </div>
   );
