@@ -43,15 +43,12 @@ const CSS = `
   .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; display: inline-block; }
   .toast { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); background: #1E293B; border: 1px solid ${C.border}; padding: 10px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; z-index: 1000; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
   .badge-premium { background: linear-gradient(135deg, ${C.purple}, ${C.accent}); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-left: 6px; }
-  
-  /* Feature Matrix Styling */
   .matrix-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
   .matrix-table th { text-align: left; padding: 8px; color: ${C.muted}; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid ${C.border}; }
   .matrix-table td { padding: 10px 8px; border-bottom: 1px solid rgba(36,47,72,0.5); }
   .matrix-row-highlight { background: rgba(59,130,246,0.03); }
 `;
 
-// ── UTILS & ICON PATTERNS ─────────────────────────────────────────────────────
 const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v || 0);
 
 const I = {
@@ -62,7 +59,6 @@ const I = {
   Learn: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
 };
 
-// ── ONBOARDING COMPONENT ──────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const [name, setName] = useState("");
   const [income, setIncome] = useState("");
@@ -74,38 +70,35 @@ function Onboarding({ onDone }) {
         <div style={{ fontSize: 24, fontWeight: 800 }}>moneycode</div>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>High-velocity ledger engine for complex personal capital flows.</div>
       </div>
-
       <div className="card">
         <div className="fld"><div className="flb">First Name / Identifier</div><input className="inp" placeholder="e.g. Alex" value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="fld"><div className="flb">Monthly Take-Home Allocation ($)</div><input className="inp mono" type="number" placeholder="7500" value={income} onChange={e => setIncome(e.target.value)} /></div>
       </div>
-
       <button className="btn bp bfull" onClick={() => onDone({ name: name.trim() || "User", income: parseFloat(income) || 7500 })} style={{ padding: '14px' }}>Initialize Engine Profile</button>
     </div>
   );
 }
 
-// ── MAIN APPLICATION INTERFACE ────────────────────────────────────────────────
 export default function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState("home");
-  
-  // Core State
   const [name, setName] = useState("");
   const [income, setIncome] = useState(7500);
   const [isPremium, setIsPremium] = useState(false);
   const [multiplayerActive, setMultiplayerActive] = useState(false);
   const [toast, setToast] = useState(null);
-
-  // Sync Architecture State
   const [plaidHealthy, setPlaidHealthy] = useState(true);
   const [finicityFallback, setFinicityFallback] = useState(false);
 
-  // Two-Tap Review Queue State
-  const [reviewQueue, setReviewQueue] = useState([
-    { id: 1, merchant: "Flipped RSU Cash Settlement", amount: 14500, date: "Today", isTransfer: true, ruleTriggered: "Smart Auto-Exclusion Engine", desc: "Detected system movement between internal Brokerage & Checking" },
-    { id: 2, merchant: "Target Store #2410", amount: 124.50, date: "Yesterday", isTransfer: false, ruleTriggered: null, desc: "Unassigned Consumer Liability Outflow" },
-    { id: 3, merchant: "ESPP Share Liquidation Flip", amount: 4800, date: "2 days ago", isTransfer: true, ruleTriggered: "Smart Auto-Exclusion Engine", desc: "Detected automated programmatic payroll stock flip" }
+  // Manual review queue contains ONLY unassigned transactions requiring human choices
+  const [manualQueue, setManualQueue] = useState([
+    { id: 2, merchant: "Target Store #2410", amount: 124.50, date: "Yesterday", desc: "Unassigned Consumer Liability Outflow" }
+  ]);
+
+  // Read-only background log proving zero-friction smart rules ran flawlessly
+  const [autoExcludedLog, setAutoExcludedLog] = useState([
+    { id: 1, merchant: "Flipped RSU Cash Settlement", amount: 14500, date: "Today", rule: "Smart Auto-Exclusion Engine", reason: "Isolated internal Brokerage to Checking self-transfer." },
+    { id: 3, merchant: "ESPP Share Liquidation Flip", amount: 4800, date: "2 days ago", rule: "Smart Auto-Exclusion Engine", reason: "Isolated programmatic payroll stock liquidation swap." }
   ]);
 
   const pop = (msg, icon = "✅") => {
@@ -113,11 +106,7 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  // Safe to Spend Engine Calculation
-  const safeToSpend = useMemo(() => {
-    const baseline = income * 0.45; // Simulated non-discretionary baseline cap
-    return baseline;
-  }, [income]);
+  const safeToSpend = useMemo(() => income * 0.45, [income]);
 
   return (
     <div className="app">
@@ -133,7 +122,6 @@ export default function App() {
         }} />
       ) : (
         <>
-          {/* STICKY HEADER */}
           <div className="hdr">
             <div className="logo">money<span style={{ color: C.accent }}>code</span>{isPremium && <span className="badge-premium">PRO</span>}</div>
             <button className={`btn ${isPremium ? "bplus" : "bg"} bsm`} onClick={() => {
@@ -144,10 +132,10 @@ export default function App() {
             </button>
           </div>
 
-          {/* TAB 1: HOME DASHBOARD */}
+          {/* TAB 1: HOME */}
           {tab === "home" && (
             <div className="scroll">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifycontent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
                 <div>
                   <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>ACTIVE LEDGER PROFILE</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: "white" }}>{name}'s Household</div>
@@ -165,8 +153,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* PREMIUM SAFE TO SPEND PHONE WIDGET VIEW */}
-              <div className="card" style={{ background: `linear-gradient(135deg, #1E293B, ${C.surface})`, border: `1px solid ${C.border}` }}>
+              <div className="card" style={{ background: `linear-gradient(135deg, #1E293B, ${C.surface})` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <div style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: 0.5 }}>SNAPPY HOME PHONE WIDGET METER</div>
@@ -180,7 +167,6 @@ export default function App() {
                 <div style={{ fontSize: 11, color: C.muted }}>Calculated system net liquidity protection buffer.</div>
               </div>
 
-              {/* LIVE SYNC STATUS ROW */}
               <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>INGESTION ENGINE PATHWAY</div>
@@ -191,21 +177,20 @@ export default function App() {
                 <button className="btn bg bsm" onClick={() => setTab("sync")}>View Routing</button>
               </div>
 
-              {/* COMPACT STATS */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div className="card" style={{ marginBottom: 0 }}>
-                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 600 }}>PENDING TRANSACTIONS</div>
-                  <div className="mono" style={{ fontSize: 18, fontWeight: 800, marginTop: 4, color: reviewQueue.length > 0 ? C.yellow : C.success }}>
-                    {reviewQueue.length} items
+                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 600 }}>MANUAL REVIEW QUEUE</div>
+                  <div className="mono" style={{ fontSize: 18, fontWeight: 800, marginTop: 4, color: manualQueue.length > 0 ? C.yellow : C.success }}>
+                    {manualQueue.length} items
                   </div>
-                  {reviewQueue.length > 0 && <button className="btn bp bsm bfull" style={{ marginTop: 8, fontSize: 10 }} onClick={() => setTab("review")}>Launch Two-Tap UI</button>}
+                  {manualQueue.length > 0 && <button className="btn bp bsm bfull" style={{ marginTop: 8, fontSize: 10 }} onClick={() => setTab("review")}>Launch Two-Tap UI</button>}
                 </div>
                 <div className="card" style={{ marginBottom: 0 }}>
-                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 600 }}>HOUSEHOLD TIER PLAN</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 6, color: isPremium ? C.purple : C.text }}>
-                    {isPremium ? "$7/mo Pro Subscription" : "Free Tier Basic"}
+                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 600 }}>SILENT EXCLUSIONS RUN</div>
+                  <div className="mono" style={{ fontSize: 18, fontWeight: 800, marginTop: 4, color: C.purple }}>
+                    {autoExcludedLog.length} filtered
                   </div>
-                  <div style={{ fontSize: 9, color: C.muted, marginTop: 2 }}>{isPremium ? "Unlimited Sync Enabled" : "CSV Manual entry framework"}</div>
+                  <button className="btn bg bsm bfull" style={{ marginTop: 8, fontSize: 10 }} onClick={() => setTab("review")}>View Logs</button>
                 </div>
               </div>
             </div>
@@ -214,102 +199,73 @@ export default function App() {
           {/* TAB 2: TWO-TAP REVIEW UI */}
           {tab === "review" && (
             <div className="scroll">
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>High-Velocity Review Queue</div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Tap to action inputs instantly. Swipe-mechanic replica pipeline.</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Two-Tap Verification Hub</div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>High-velocity action queue for inputs requiring human evaluation.</div>
               </div>
 
-              {reviewQueue.length === 0 ? (
-                <div className="card" style={{ textAlign: "center", padding: "40px 20px" }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
-                  <div style={{ fontWeight: 700 }}>Queue Fully Cleared</div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>No incoming ledger friction detected. Ingestion clean.</div>
+              {/* MANUAL INTERACTION BLOCK */}
+              <p className="lbl">Needs Action ({manualQueue.length})</p>
+              {manualQueue.length === 0 ? (
+                <div className="card" style={{ textAlign: "center", padding: "24px 12px" }}>
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>Manual Queue Cleared</div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>All outstanding unassigned leakage vectors verified.</div>
                 </div>
               ) : (
-                <div>
-                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" }}>
-                    Item 1 of {reviewQueue.length} Active Queue Blocks
-                  </div>
-                  
-                  {/* PENDING TRANSACTION HIGHLIGHT CARD */}
-                  {(() => {
-                    const tx = reviewQueue[0];
-                    return (
-                      <div className="card" style={{ border: `2px solid ${tx.isTransfer ? C.purple : C.border}`, background: "#1A233A" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <div>
-                            <span className="tag" style={{ background: tx.isTransfer ? "rgba(139,92,246,0.2)" : "rgba(59,130,246,0.2)", color: tx.isTransfer ? C.purple : C.blue, marginBottom: 6 }}>
-                              {tx.isTransfer ? "SYSTEM SELF-TRANSFER MATCH" : "UNASSIGNED TRANSACTION"}
-                            </span>
-                            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{tx.merchant}</div>
-                            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{tx.desc}</div>
-                          </div>
-                          <div className="mono" style={{ fontSize: 18, fontWeight: 800, color: tx.isTransfer ? C.text : C.yellow }}>
-                            {tx.isTransfer ? "" : "-"}{fmt(tx.amount)}
-                          </div>
-                        </div>
-
-                        {tx.isTransfer && (
-                          <div style={{ background: "rgba(16,185,129,0.1)", border: `1px dashed ${C.success}`, borderRadius: 6, padding: "8px", marginTop: 12, fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}>
-                            <span>🎯</span>
-                            <div>
-                              <strong style={{ color: C.success }}>{tx.ruleTriggered}:</strong> Flagged as non-cashflow pollution. Auto-marked for complete isolation exemption.
-                            </div>
-                          </div>
-                        )}
-
-                        {/* INTERACTIVE UI ACTIONS */}
-                        <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                          <button className="btn bg bsm" style={{ borderColor: C.red, color: C.red }} onClick={() => {
-                            setReviewQueue(reviewQueue.filter(x => x.id !== tx.id));
-                            pop("Transaction completely excluded", "🚫");
-                          }}>
-                            {tx.isTransfer ? "Confirm Exclude" : "Ignore / Hide"}
-                          </button>
-                          
-                          <button className="btn bg bsm" style={{ color: C.yellow }} onClick={() => {
-                            pop("Split engine fired. Modify fractional distributions.");
-                          }}>
-                            🥞 Split Flow
-                          </button>
-                          
-                          <button className="btn bp bsm" onClick={() => {
-                            setReviewQueue(reviewQueue.filter(x => x.id !== tx.id));
-                            pop("Cleared to ledger fields!");
-                          }}>
-                            ✓ Two-Tap Approve
-                          </button>
-                        </div>
+                manualQueue.map(tx => (
+                  <div key={tx.id} className="card" style={{ border: `1px solid ${C.accent}`, background: "#111827" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <span className="tag" style={{ background: "rgba(59,130,246,0.15)", color: C.blue, marginBottom: 6 }}>Unassigned Outflow</span>
+                        <div style={{ fontSize: 15, fontWeight: 800, marginTop: 2 }}>{tx.merchant}</div>
+                        <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{tx.desc}</div>
                       </div>
-                    );
-                  })()}
-                  
-                  {/* REMAINDER PREVIEWS LIST */}
-                  {reviewQueue.slice(1).map(item => (
-                    <div key={item.id} className="card" style={{ opacity: 0.4, padding: "8px 12px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-                        <span>{item.merchant}</span>
-                        <span className="mono">{fmt(item.amount)}</span>
+                      <div className="mono" style={{ fontSize: 16, fontWeight: 800, color: C.yellow }}>
+                        -{fmt(tx.amount)}
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <button className="btn bg bsm" onClick={() => pop("Split parameters expanded.")}>Split Cashflow</button>
+                      <button className="btn bp bsm" onClick={() => {
+                        setManualQueue(manualQueue.filter(x => x.id !== tx.id));
+                        pop("Approved to ledger!");
+                      }}>Approve Choice</button>
+                    </div>
+                  </div>
+                ))
               )}
+
+              {/* TRUE BACKGROUND AUTO-EXCLUSION DISPLAY ROW */}
+              <p className="lbl" style={{ marginTop: 24 }}>Background Exclusions (Zero Input Run)</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {autoExcludedLog.map(log => (
+                  <div key={log.id} className="card" style={{ borderLeft: `3px solid ${C.purple}`, opacity: 0.85, padding: "10px 12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>{log.merchant}</div>
+                        <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{log.reason}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div className="mono" style={{ fontSize: 13, fontWeight: 700, color: C.muted }}>{fmt(log.amount)}</div>
+                        <span className="tag" style={{ background: "rgba(139,92,246,0.12)", color: C.purple, fontSize: 9, marginTop: 4 }}>Isolated</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* TAB 3: MULTI-AGGREGATOR & TIER CONFIG */}
+          {/* TAB 3: ROUTING STATUS */}
           {tab === "sync" && (
             <div className="scroll">
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Multi-Aggregator Failover Architecture</div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Interactive simulation of Moneycode's resilient backend connections.</div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Multi-Aggregator Failover Core</div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Simulation parameters testing API connection continuity.</div>
               </div>
 
-              {/* DUAL LAYER ROUTER SIMULATOR CARD */}
               <div className="card">
-                <div style={{ fontSize: 11, color: C.muted, fontweight: 600, marginBottom: 8 }}>ROUTING HEALTH TEST INTERFACE</div>
-                
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${C.border}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: plaidHealthy ? C.success : C.red }} />
@@ -318,104 +274,66 @@ export default function App() {
                   <button className="btn bg bsm" style={{ fontSize: 9, padding: "4px 8px" }} onClick={() => {
                     setPlaidHealthy(!plaidHealthy);
                     if (plaidHealthy) setFinicityFallback(true);
-                    pop(plaidHealthy ? "Simulated Plaid outage. Triggering backup circuit..." : "Plaid connection recovered");
+                    pop(plaidHealthy ? "Simulated Plaid outage. Running backup loop..." : "Plaid connection online");
                   }}>
-                    {plaidHealthy ? "Simulate Plaid Drop" : "Restore Plaid"}
+                    {plaidHealthy ? "Drop Connection" : "Repair Link"}
                   </button>
                 </div>
-
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", marginTop: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: (!plaidHealthy && finicityFallback) ? C.purple : C.muted }} />
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>Secondary Failover Engine (Finicity)</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Secondary Failover (Finicity)</span>
                   </div>
                   <span className="mono" style={{ fontSize: 11, color: (!plaidHealthy && finicityFallback) ? C.purple : C.muted, fontWeight: 700 }}>
-                    {(!plaidHealthy && finicityFallback) ? "ACTIVE ROUTE LIVE" : "STANDBY CIRCUITS"}
+                    {(!plaidHealthy && finicityFallback) ? "ACTIVE ROUTE" : "STANDBY"}
                   </span>
                 </div>
               </div>
 
-              {/* INTERACTIVE PRODUCT TIER TABLE */}
               <p className="lbl">Core Product Structural Architecture</p>
               <div className="card" style={{ padding: "8px" }}>
                 <table className="matrix-table">
                   <thead>
-                    <tr>
-                      <th>Feature Array</th>
-                      <th>Free Tier Mode</th>
-                      <th>Premium ($7/mo)</th>
-                    </tr>
+                    <tr><th>Feature Array</th><th>Free Tier Mode</th><th>Premium ($7/mo)</th></tr>
                   </thead>
                   <tbody>
                     <tr className={!isPremium ? "matrix-row-highlight" : ""}>
                       <td><strong>Data Ingestion</strong></td>
-                      <td style={{ color: !isPremium ? C.accent : C.text }}>Manual / CSV Outlines</td>
-                      <td style={{ color: isPremium ? C.accent : C.text }}>Unlimited API Automatic Sync</td>
+                      <td style={{ color: !isPremium ? C.accent : C.text }}>Manual / CSV</td>
+                      <td style={{ color: isPremium ? C.accent : C.text }}>Unlimited API Sync</td>
                     </tr>
-                    <tr>
-                      <td><strong>Account Caps</strong></td>
-                      <td>Up to 2 Accounts</td>
-                      <td>Unlimited Pipeline Links</td>
-                    </tr>
+                    <tr><td><strong>Account Caps</strong></td><td>Up to 2 Accounts</td><td>Unlimited Pipeline Links</td></tr>
                     <tr className={isPremium ? "matrix-row-highlight" : ""}>
-                      <td><strong>Collaboration</strong></td>
-                      <td>Single User Framework</td>
-                      <td><strong>Multiplayer Mode</strong> (Partner Sync)</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Dashboard Speed</strong></td>
-                      <td>Static Baselines</td>
-                      <td>Real-Time Cross Metrics</td>
+                      <td><strong>Collaboration</strong></td><td>Single User</td><td><strong>Multiplayer Mode</strong></td>
                     </tr>
                   </tbody>
                 </table>
-                <div style={{ padding: "8px", fontSize: 11, color: C.muted, textAlign: "center", marginTop: 6, borderTop: `1px solid ${C.border}` }}>
-                  Current Mode: <strong>{isPremium ? "PREMIUM ENGINE UNLOCKED" : "FREE MANUAL ENGINE"}</strong>
-                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: PLAN & ADVANCED COMPOUND ROLLOVERS */}
+          {/* TAB 4: PLAN */}
           {tab === "plan" && (
             <div className="scroll">
               <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12 }}>Strategic Allocations Engine</div>
-              
-              {/* ADVANCED CASH FLOW ROLLOVER CARD */}
               <div className="card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div className="flb" style={{ margin: 0 }}>Advanced Advanced "Rollover" Budget Rules</div>
+                  <div className="flb" style={{ margin: 0 }}>Advanced "Rollover" Budget Rules</div>
                   {isPremium ? <span className="tag" style={{ background: C.success, color: "white" }}>Unlocked</span> : <span className="tag" style={{ background: C.border, color: C.muted }}>Locked</span>}
                 </div>
-                <p style={{ fontSize: 12, color: C.muted, margin: "4px 0 10px 0" }}>Automatically cascade remaining unspent monthly limits directly into your secondary investment horizons.</p>
+                <p style={{ fontSize: 12, color: C.muted, margin: "4px 0 10px 0" }}>Cascade remaining unspent monthly limits directly into your secondary investment horizons.</p>
                 <div style={{ background: C.bg, padding: "8px", borderRadius: 6, display: "flex", justifyContent: "space-between", fontSize: 11 }}>
                   <span>Target Overflow Rule Vector:</span>
                   <strong style={{ color: isPremium ? C.accent : C.muted }}>{isPremium ? "Active -> Cascade to Portfolio Index" : "Inactive (Requires Premium)"}</strong>
                 </div>
               </div>
-
-              {/* WEALTH COMPOUNDING SECTION */}
-              <p className="lbl">Wealth Acceleration Projections</p>
-              <div className="card">
-                <div className="fld">
-                  <div className="flb">Programmatic Monthly Addition Amount ($)</div>
-                  <input className="inp mono" type="number" defaultValue="1500" readOnly />
-                </div>
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10, marginTop: 12 }}>
-                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>30-YEAR STRUCTURAL ACCELERATION MATRIX (7% COMP)</div>
-                  <div className="mono" style={{ fontSize: 24, fontWeight: 900, color: C.success, marginTop: 4 }}>
-                    {fmt(1500 * 12 * ((Math.pow(1.07, 30) - 1) / 0.07))}
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* TAB 5: SYSTEM INTEL */}
+          {/* TAB 5: SPECS */}
           {tab === "learn" && (
             <div className="scroll">
               <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>System Intelligence Hub</div>
-              <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>Product strategy vectors for the Moneycode model ecosystem.</div>
               <div className="card">
                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>Why $7/mo Beats the Competition</div>
                 <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
@@ -425,7 +343,7 @@ export default function App() {
             </div>
           )}
 
-          {/* BOTTOM NAVIGATION TABBAR */}
+          {/* CORE TAB BAR */}
           <div className="tabbar">
             {[
               { id: "home", l: "Home", ico: <I.Home /> }, 
