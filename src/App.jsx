@@ -20,12 +20,13 @@ const CSS = `
   body { margin: 0; background: ${C.bg}; color: ${C.text}; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
   .app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${C.bg}; display: flex; flex-direction: column; position: relative; padding-bottom: 75px; box-sizing: border-box; }
   .scroll { flex: 1; overflow-y: auto; padding: 16px; }
-  .card { background: ${C.surface}; border: 1px solid ${C.border}; borderRadius: 12px; padding: 14px; margin-bottom: 12px; border-radius: 12px; }
-  .hdr { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid ${C.border}; background: rgba(20,27,45,0.8); backdrop-filter: blur(8px); sticky; top: 0; z-index: 10; }
+  .card { background: ${C.surface}; border: 1px solid ${C.border}; padding: 14px; margin-bottom: 12px; border-radius: 12px; }
+  .hdr { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid ${C.border}; background: rgba(20,27,45,0.8); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; }
   .logo { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
   .btn { border: none; border-radius: 8px; font-weight: 600; font-size: 13px; padding: 10px 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; color: white; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .bp { background: ${C.accent}; }
-  .bp:hover { opacity: 0.9; }
+  .bp:hover:not(:disabled) { opacity: 0.9; }
   .bg { background: ${C.border}; color: ${C.text}; }
   .bg:hover { background: #2f3d5e; }
   .bplus { background: linear-gradient(135deg, ${C.purple}, ${C.accent}); text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
@@ -60,7 +61,7 @@ const I = {
   Learn: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
 };
 
-// ── ONBOARDING COMPONENT (FIXED LEDGER PARSING) ────────────────────────────────
+// ── ONBOARDING COMPONENT ──────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const [name, setName] = useState("");
   const [income, setIncome] = useState("");
@@ -91,8 +92,8 @@ function Onboarding({ onDone }) {
   };
 
   return (
-    <div className="scroll" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "100vh" }}>
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
+    <div className="scroll" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", marginBottom: 24, marginTop: 20 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>⚔️</div>
         <div style={{ fontSize: 22, fontWeight: 800 }}>Clear Your Liabilities</div>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>Let's initialize your primary ledger parameters.</div>
@@ -113,7 +114,7 @@ function Onboarding({ onDone }) {
         </div>
       </div>
 
-      <button className="btn bp bfull" onClick={submit} style={{ padding: '14px' }}>Build Active Profiles</button>
+      <button className="btn bp bfull" onClick={submit} style={{ padding: '14px', marginBottom: 20 }}>Build Active Profiles</button>
     </div>
   );
 }
@@ -159,7 +160,7 @@ function HomeTab({ debts, name, onOpenManage, triggerSavingsForm, assets, income
   );
 }
 
-// ── AI ADVISOR FIXED COMPONENT ───────────────────────────────────────────────
+// ── AI ADVISOR COMPONENT ──────────────────────────────────────────────────────
 function AiAdvisorComponent({ debts, income, efund }) {
   const [messages, setMessages] = useState([
     { role: 'assistant', text: "Systems online. Point out your strategy bottlenecks, and let's run optimization mechanics." }
@@ -267,7 +268,7 @@ function PlanTab({ debts, income }) {
       <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>Fine-tune system distribution levels to project asset horizons.</div>
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+        <div style={{ display: "flex", justifycontent: "space-between", marginBottom: 6 }}>
           <div className="flb" style={{ margin: 0 }}>Extra Monthly Payoff Allocation</div>
           <span className="mono" style={{ color: C.accent, fontWeight: 700 }}>{fmt(extra)}</span>
         </div>
@@ -440,130 +441,133 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  if (!onboarded) {
-    return <Onboarding onDone={(d) => {
-      setName(d.name);
-      setIncome(d.income);
-      setDebts(d.initialDebts || []);
-      setOnboarded(true);
-      pop("Ledger active!", "🚀");
-    }} />;
-  }
-
   return (
     <div className="app">
-      <style>{CSS}</style>
+      {/* FORCE STYLE INJECTION NATIVELY FOR VITE */}
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
       
       {toast && <div className="toast">{toast.icon} <span>{toast.msg}</span></div>}
 
-      <div className="hdr">
-        <div className="logo">money<span style={{ color: C.accent }}>code</span></div>
-        <button className={`btn ${isPlus ? "bplus" : "bg"} bsm`} onClick={() => setModal("upgrade")}>
-          {isPlus ? "Plus Engine Pro" : "Upgrade Engine"}
-        </button>
-      </div>
-
-      {tab === "home" && (
-        <HomeTab 
-          debts={debts} 
-          name={name} 
-          income={income} 
-          efund={efund} 
-          onOpenManage={() => setTab("plan")} 
-          triggerSavingsForm={() => {
-            setTab("money");
-            setForceGoalOpen(true);
-          }}
-        />
-      )}
-      
-      {tab === "debts" && (
-        <DebtsTab 
-          debts={debts} 
-          setDebts={setDebts} 
-          openModal={(m) => setModal(m)} 
-          pop={pop} 
-          onEdit={(d) => {
-            setEditingDebt(d);
-            setDForm({ name: d.name, type: d.type, balance: d.balance, rate: d.rate, min: d.min });
-            setModal("edit");
-          }}
-        />
-      )}
-      
-      {tab === "plan" && <PlanTab debts={debts} income={income} />}
-      
-      {tab === "money" && (
-        <MoneyTab 
-          debts={debts} 
-          assets={assets} 
-          setAssets={setAssets} 
-          income={income} 
-          setIncome={setIncome} 
-          efund={efund} 
-          setEfund={setEfund} 
-          pop={pop}
-          forceShowGoalForm={forceGoalOpen}
-          closeForceGoal={() => setForceGoalOpen(false)}
-        />
-      )}
-      
-      {tab === "learn" && <LearnTab />}
-
-      {/* SYSTEM MODALS */}
-      {modal === "upgrade" && (
-        <div className="mover" onClick={() => setModal(null)}>
-          <div className="mo" onClick={e => e.stopPropagation()} style={{ textAlign: "center" }}>
-            <div className="hdl" />
-            <div style={{ fontSize: 32, marginBottom: 8 }}>⚡</div>
-            <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Unlock Complete Projections</div>
-            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 14 }}>Unlock predictive amortization tracks, multi-factor simulations, and expanded cloud ledger parsing options.</div>
-            <button className="btn bplus bfull" onClick={() => { setIsPlus(true); setModal(null); pop("Pro Systems Ready!", "✨"); }}>Activate Pro Access ($6.99/mo)</button>
+      {!onboarded ? (
+        <Onboarding onDone={(d) => {
+          setName(d.name);
+          setIncome(d.income);
+          setDebts(d.initialDebts || []);
+          setOnboarded(true);
+          pop("Ledger active!", "🚀");
+        }} />
+      ) : (
+        <>
+          <div className="hdr">
+            <div className="logo">money<span style={{ color: C.accent }}>code</span></div>
+            <button className={`btn ${isPlus ? "bplus" : "bg"} bsm`} onClick={() => setModal("upgrade")}>
+              {isPlus ? "Plus Engine Pro" : "Upgrade Engine"}
+            </button>
           </div>
-        </div>
-      )}
 
-      {(modal === "add" || modal === "edit") && (
-        <div className="mover" onClick={() => setModal(null)}>
-          <div className="mo" onClick={e => e.stopPropagation()}>
-            <div className="hdl" />
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>{modal === "add" ? "Log New Liability Record" : "Modify Record Parameters"}</div>
-            <div className="fld"><div className="flb">Identifier</div><input className="inp" value={dForm.name} onChange={e => setDForm({ ...dForm, name: e.target.value })} /></div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <div className="fld"><div className="flb">Principal Owed</div><input className="inp mono" type="number" value={dForm.balance} onChange={e => setDForm({ ...dForm, balance: e.target.value })} /></div>
-              <div className="fld"><div className="flb">Rate % (APR)</div><input className="inp mono" type="number" value={dForm.rate} onChange={e => setDForm({ ...dForm, rate: e.target.value })} /></div>
+          {tab === "home" && (
+            <HomeTab 
+              debts={debts} 
+              name={name} 
+              income={income} 
+              efund={efund} 
+              onOpenManage={() => setTab("plan")} 
+              triggerSavingsForm={() => {
+                setTab("money");
+                setForceGoalOpen(true);
+              }}
+            />
+          )}
+          
+          {tab === "debts" && (
+            <DebtsTab 
+              debts={debts} 
+              setDebts={setDebts} 
+              openModal={(m) => setModal(m)} 
+              pop={pop} 
+              onEdit={(d) => {
+                setEditingDebt(d);
+                setDForm({ name: d.name, type: d.type, balance: d.balance, rate: d.rate, min: d.min });
+                setModal("edit");
+              }}
+            />
+          )}
+          
+          {tab === "plan" && <PlanTab debts={debts} income={income} />}
+          
+          {tab === "money" && (
+            <MoneyTab 
+              debts={debts} 
+              assets={assets} 
+              setAssets={setAssets} 
+              income={income} 
+              setIncome={setIncome} 
+              efund={efund} 
+              setEfund={setEfund} 
+              pop={pop}
+              forceShowGoalForm={forceGoalOpen}
+              closeForceGoal={() => setForceGoalOpen(false)}
+            />
+          )}
+          
+          {tab === "learn" && <LearnTab />}
+
+          {/* SYSTEM MODALS */}
+          {modal === "upgrade" && (
+            <div className="mover" onClick={() => setModal(null)}>
+              <div className="mo" onClick={e => e.stopPropagation()} style={{ textAlign: "center" }}>
+                <div className="hdl" />
+                <div style={{ fontSize: 32, marginBottom: 8 }}>⚡</div>
+                <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Unlock Complete Projections</div>
+                <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 14 }}>Unlock predictive amortization tracks, multi-factor simulations, and expanded cloud ledger parsing options.</div>
+                <button className="btn bplus bfull" onClick={() => { setIsPlus(true); setModal(null); pop("Pro Systems Ready!", "✨"); }}>Activate Pro Access ($6.99/mo)</button>
+              </div>
             </div>
-            <div className="fld"><div className="flb">Minimum Requirement</div><input className="inp mono" type="number" value={dForm.min} onChange={e => setDForm({ ...dForm, min: e.target.value })} /></div>
-            <button className="btn bp bfull" disabled={!dForm.name || !dForm.balance} onClick={() => {
-              const b = parseFloat(dForm.balance) || 0, r = parseFloat(dForm.rate) || 0, m = parseFloat(dForm.min) || 0;
-              if (modal === "add") {
-                setDebts([...debts, { id: Date.now(), name: dForm.name, type: "credit", balance: b, original: b, rate: r, min: m, color: C.accent }]);
-                pop("Account Cataloged!");
-              } else {
-                setDebts(debts.map(x => x.id === editingDebt.id ? { ...x, name: dForm.name, balance: b, rate: r, min: m } : x));
-                pop("Ledger Adjusted!");
-              }
-              setModal(null); setDForm({ name: "", type: "credit", balance: "", rate: "", min: "" });
-            }}>{modal === "add" ? "Commit Entry" : "Save Structural Changes"}</button>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* CORE TAB NAVIGATION */}
-      <div className="tabbar">
-        {[
-          { id: "home", l: "Home", ico: <I.Home /> }, 
-          { id: "debts", l: "Debts", ico: <I.Debt /> }, 
-          { id: "plan", l: "Plan", ico: <I.Plan /> }, 
-          { id: "money", l: "Money", ico: <I.Money /> }, 
-          { id: "learn", l: "Learn", ico: <I.Learn /> }
-        ].map(t => (
-          <button key={t.id} className={`tab ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
-            {t.ico}
-            <span>{t.l}</span>
-          </button>
-        ))}
-      </div>
+          {(modal === "add" || modal === "edit") && (
+            <div className="mover" onClick={() => setModal(null)}>
+              <div className="mo" onClick={e => e.stopPropagation()}>
+                <div className="hdl" />
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>{modal === "add" ? "Log New Liability Record" : "Modify Record Parameters"}</div>
+                <div className="fld"><div className="flb">Identifier</div><input className="inp" value={dForm.name} onChange={e => setDForm({ ...dForm, name: e.target.value })} /></div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div className="fld"><div className="flb">Principal Owed</div><input className="inp mono" type="number" value={dForm.balance} onChange={e => setDForm({ ...dForm, balance: e.target.value })} /></div>
+                  <div className="fld"><div className="flb">Rate % (APR)</div><input className="inp mono" type="number" value={dForm.rate} onChange={e => setDForm({ ...dForm, rate: e.target.value })} /></div>
+                </div>
+                <div className="fld"><div className="flb">Minimum Requirement</div><input className="inp mono" type="number" value={dForm.min} onChange={e => setDForm({ ...dForm, min: e.target.value })} /></div>
+                <button className="btn bp bfull" disabled={!dForm.name || !dForm.balance} onClick={() => {
+                  const b = parseFloat(dForm.balance) || 0, r = parseFloat(dForm.rate) || 0, m = parseFloat(dForm.min) || 0;
+                  if (modal === "add") {
+                    setDebts([...debts, { id: Date.now(), name: dForm.name, type: "credit", balance: b, original: b, rate: r, min: m, color: C.accent }]);
+                    pop("Account Cataloged!");
+                  } else {
+                    setDebts(debts.map(x => x.id === editingDebt.id ? { ...x, name: dForm.name, balance: b, rate: r, min: m } : x));
+                    pop("Ledger Adjusted!");
+                  }
+                  setModal(null); setDForm({ name: "", type: "credit", balance: "", rate: "", min: "" });
+                }}>{modal === "add" ? "Commit Entry" : "Save Structural Changes"}</button>
+              </div>
+            </div>
+          )}
+
+          {/* CORE TAB NAVIGATION */}
+          <div className="tabbar">
+            {[
+              { id: "home", l: "Home", ico: <I.Home /> }, 
+              { id: "debts", l: "Debts", ico: <I.Debt /> }, 
+              { id: "plan", l: "Plan", ico: <I.Plan /> }, 
+              { id: "money", l: "Money", ico: <I.Money /> }, 
+              { id: "learn", l: "Learn", ico: <I.Learn /> }
+            ].map(t => (
+              <button key={t.id} className={`tab ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
+                {t.ico}
+                <span>{t.l}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
