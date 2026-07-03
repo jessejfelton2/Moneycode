@@ -253,14 +253,15 @@ function Onboarding({onDone}){
   const [hasJob,setHasJob]=useState(null);
   const [income,setIncome]=useState("");
 
-  const maxStep=hasDebts?4:4;
+  const finish=()=>{
+    const debt=firstDebt.name&&firstDebt.balance?[{id:Date.now(),name:firstDebt.name,balance:parseFloat(firstDebt.balance)||0,original:parseFloat(firstDebt.balance)||0,rate:parseFloat(firstDebt.rate)||0,min:parseFloat(firstDebt.min)||0,type:firstDebt.type,color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[firstDebt.type]||C.blue}]:[];
+    onDone({name,hasDebts,hasJob,income:parseFloat(income)||0,firstDebt:debt});
+  };
   const next=()=>{
     if(step===0&&!name.trim())return;
-    if(step<maxStep)setStep(s=>s+1);
-    else{
-      const debt=firstDebt.name&&firstDebt.balance?[{id:Date.now(),name:firstDebt.name,balance:parseFloat(firstDebt.balance)||0,original:parseFloat(firstDebt.balance)||0,rate:parseFloat(firstDebt.rate)||0,min:parseFloat(firstDebt.min)||0,type:firstDebt.type,color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[firstDebt.type]||C.blue}]:[];
-      onDone({name,hasDebts,hasJob,income:parseFloat(income)||0,firstDebt:debt});
-    }
+    if(step<3)setStep(s=>s+1);
+    else if(step===3&&hasDebts) setStep(4);
+    else finish();
   };
 
   return (
