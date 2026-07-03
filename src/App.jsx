@@ -118,6 +118,13 @@ body { background: #06090E; color: #F0F4F8; font-family: 'Inter', sans-serif; -w
 .quiz-opt.wrong { background: rgba(255, 83, 83, 0.12); border-color: #FF5353; color: #FF5353; }
 .real-life { background: linear-gradient(135deg, #111823, #1A150A); border: 1px solid rgba(255, 199, 69, 0.2); border-radius: 12px; padding: 12px 14px; margin-top: 10px; font-size: 12.5px; color: #FFC745; line-height: 1.55; }
 .ring { position: relative; width: 140px; height: 140px; margin: 0 auto 14px; }
+.ob { padding: 24px 16px; min-height: 100vh; display: flex; flex-direction: column; background: #06090E; }
+.opip { flex: 1; height: 4px; background: #1C2838; border-radius: 2px; transition: background 0.2s; }
+.opip.on { background: #B5FF4D; }
+.oopt { background: #111823; border: 1px solid #1C2838; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s ease; }
+.oopt.on { border-color: #B5FF4D; background: rgba(181, 255, 77, 0.04); }
+.ps { flex: 1; height: 4px; background: #1C2838; border-radius: 2px; }
+.ps.on { background: #B5FF4D; }
 @keyframes slideup { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes tin { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes fall { from { transform: translateY(-24px) rotate(0deg); opacity: 1; } to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
@@ -371,7 +378,7 @@ export default function App() {
                     <div className="irow" key={a.id}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
-                        <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", fontSize: 9, letterSpacing: ".02em" }}>{a.type} Position</div>
+                        <div style={{ color: C.muted, textTransform: "uppercase", fontSize: 9, letterSpacing: ".02em" }}>{a.type} Position</div>
                       </div>
                       <div className="mono" style={{ color: C.blue, fontSize: 14, fontWeight: 500 }}>{fmt(a.value)}</div>
                     </div>
@@ -412,7 +419,6 @@ export default function App() {
 
                 {(() => {
                   const sorted = [...debts].sort((a, b) => strategy === "avalanche" ? b.rate - a.rate : a.balance - b.balance);
-                  let currentPool = extraPay;
                   let totalMonths = 0;
                   let simulationDebts = debts.map(d => ({ ...d }));
                   let lifetimeInterest = 0;
@@ -494,7 +500,7 @@ export default function App() {
                     <div className="lbl" style={{ color: C.purple, margin: 0 }}>Automated Equity Liquidation & Flipping Engine</div>
                     <Toggle on={autoRouteEquity} set={setAutoRouteEquity} />
                   </div>
-                  <p style={{ fontSize: 12.5, color: C.muted, linearity: 1.4, marginTop: 6 }}>
+                  <p style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.4, marginTop: 6 }}>
                     When enabled, corporate vesting events, RSU occurrences, and ESPP payouts bypass long human delays and route directly into target long-term positions like Berkshire Hathaway or S&P 500 indexes to prevent lifestyle drift.
                   </p>
                 </div>
@@ -805,7 +811,7 @@ function Onboarding({ onDone }) {
 
   return (
     <div className="ob">
-      <div style={{ display: "flex", justify: "space-between", align"items": "center", marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div className="logo">money<span style={{ color: C.accent }}>code</span></div>
         {step > 0 && <button className="btn bg bsm" onClick={() => setStep(s => s - 1)}>← Previous Step</button>}
       </div>
