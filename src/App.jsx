@@ -246,22 +246,25 @@ function calcHealth({debts,score,assets,income,efund}){
 // ── ONBOARDING ─────────────────────────────────────────────────────────────────
 function Onboarding({onDone}){
   const [step,setStep]=useState(0);
-  // Prevent browser zoom on input focus
-  useEffect(()=>{ const m=document.querySelector("meta[name=viewport]"); if(m) m.content="width=device-width,initial-scale=1,maximum-scale=1"; },[]);
   const [name,setName]=useState("");
   const [hasDebts,setHasDebts]=useState(null);
   const [hasJob,setHasJob]=useState(null);
   const [income,setIncome]=useState("");
+  const [firstDebt,setFirstDebt]=useState({name:"",balance:"",rate:"",min:"",type:"credit"});
 
-  const finish=()=>{
-    const debt=firstDebt.name&&firstDebt.balance?[{id:Date.now(),name:firstDebt.name,balance:parseFloat(firstDebt.balance)||0,original:parseFloat(firstDebt.balance)||0,rate:parseFloat(firstDebt.rate)||0,min:parseFloat(firstDebt.min)||0,type:firstDebt.type,color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[firstDebt.type]||C.blue}]:[];
+  const finish=(fd)=>{
+    const src=fd||firstDebt;
+    const debt=src.name&&src.balance?[{id:Date.now(),name:src.name,balance:parseFloat(src.balance)||0,original:parseFloat(src.balance)||0,rate:parseFloat(src.rate)||0,min:parseFloat(src.min)||0,type:src.type,color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[src.type]||C.blue}]:[];
     onDone({name,hasDebts,hasJob,income:parseFloat(income)||0,firstDebt:debt});
   };
   const next=()=>{
     if(step===0&&!name.trim())return;
-    if(step<3)setStep(s=>s+1);
-    else if(step===3&&hasDebts) setStep(4);
-    else finish();
+    if(step<3){setStep(s=>s+1);return;}
+    if(step===3){
+      if(hasDebts===true){setStep(4);return;}
+      finish();return;
+    }
+    finish();
   };
 
   return (
