@@ -686,7 +686,7 @@ function LearnTab({completedLessons, onComplete, onOpenLesson}){
 }
 
 // ── HOME TAB ──────────────────────────────────────────────────────────────────
-function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage,onShowCert}){
+function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage,onShowCert,setTab,setMoneySub}){
   const total=debts.reduce((s,d)=>s+d.balance,0);
   const orig=debts.reduce((s,d)=>s+d.original,0);
   const mins=debts.reduce((s,d)=>s+d.min,0);
@@ -811,7 +811,7 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
         const needsEfund=efund<500;
         const needsUtil=util>30;
         const move=needsEfund
-          ?{icon:"🛡️",title:"Build your emergency fund first",body:`You have ${fmt(efund)} saved. Getting to $500 protects you from putting the next emergency on a credit card.`,action:"Set a savings goal",color:C.blue,tab:"manage",sub:"budget"}
+          ?{icon:"🛡️",title:"Build your emergency fund first",body:`You have ${fmt(efund)} saved. Getting to $500 protects you from putting the next emergency on a credit card.`,action:"Set a savings goal",color:C.blue,tab:"money",sub:"budget"}
           :needsUtil
           ?{icon:"💳",title:`Pay down your ${cards[0]?.name||"credit card"}`,body:`Your credit card usage is at ${Math.round(util)}% of your limit. Getting under 30% could improve your credit score this month.`,action:"See payoff plan",color:C.yellow,tab:"manage",sub:"plan"}
           :highRate&&highRate.rate>15
@@ -825,7 +825,7 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
                 <span style={{fontSize:24,flexShrink:0}}>{move.icon}</span>
                 <div><div style={{fontWeight:700,fontSize:14,marginBottom:4}}>{move.title}</div><div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>{move.body}</div></div>
               </div>
-              <button className="btn bp bfull bsm" onClick={()=>{onOpenManage();}}>{move.action} →</button>
+              <button className="btn bp bfull bsm" onClick={()=>onOpenManage(move.tab,move.sub)}>{move.action} →</button>
             </div>
           </div>
         );
@@ -962,9 +962,9 @@ function PlanTab({debts,isPlus,onUpgrade,income,setIncome}){
           <input className="inp mono" type="number" value={extra} onChange={e=>setExtra(Math.max(0,parseInt(e.target.value)||0))} style={{flex:1}}/>
           <span style={{fontSize:13,color:C.muted}}>/mo extra</span>
         </div>
-        <input className="sli" type="range" min="0" max="500" step="25" value={extra} onChange={e=>setExtra(parseInt(e.target.value))}/>
+        <input className="sli" type="range" min="0" max="1000" step="25" value={extra} onChange={e=>setExtra(parseInt(e.target.value))}/>
         <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:9}}>
-          {[0,25,50,100,200].map(v=><button key={v} className={`btn bsm ${extra===v?"bp":"bg"}`} onClick={()=>setExtra(v)}>+{fmt(v)}</button>)}
+          {[0,50,100,200,500].map(v=><button key={v} className={`btn bsm ${extra===v?"bp":"bg"}`} onClick={()=>setExtra(v)}>+{fmt(v)}</button>)}
         </div>
       </div>
 
@@ -1066,8 +1066,8 @@ function PlanTab({debts,isPlus,onUpgrade,income,setIncome}){
 }
 
 // ── MONEY TAB (Net Worth + Budget + Invest) ───────────────────────────────────
-function MoneyTab({debts,assets,setAssets,income,setIncome,efund,setEfund,isPlus,onUpgrade,pop}){
-  const [sub,setSub]=useState("worth");
+function MoneyTab({debts,assets,setAssets,income,setIncome,efund,setEfund,isPlus,onUpgrade,pop,initialSub}){
+  const [sub,setSub]=useState(initialSub||"worth");
   return(
     <div style={{display:"flex",flexDirection:"column"}}>
       <div style={{padding:"12px 14px 0",background:C.surface,position:"sticky",top:0,zIndex:10}}>
@@ -1418,7 +1418,7 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
     setInput("");setMsgs(m=>[...m,{r:"me",t:txt}]);setAiLoad(true);
     const sum=debts.map(d=>`${d.name}: ${fmtD(d.balance)} at ${d.rate}% APR`).join("\n");
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:`You are a financial advisor inside Moneycode, an app for 18–30 year olds. Be real, direct, and human. Use plain English — no jargon without explanation. Max 150 words. One concrete action at the end. Never be preachy. Treat them like a smart adult who just hasn't learned this stuff yet.\n\nTheir debts:\n${sum||"None added yet"}\nTotal owed: ${fmt(debts.reduce((s,d)=>s+d.balance,0))}\nMonthly income: ${fmt(income||0)}\nCredit score: ${score}`,messages:[...msgs.filter((_,i)=>i>0).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t})),{role:"user",content:txt}]})});
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:`You are a financial advisor inside Moneycode, an app for 18–30 year olds. Be real, direct, and human. Use plain English — no jargon without explanation. Max 150 words. One concrete action at the end. Never be preachy. Treat them like a smart adult who just hasn't learned this stuff yet.\n\nTheir debts:\n${sum||"None added yet"}\nTotal owed: ${fmt(debts.reduce((s,d)=>s+d.balance,0))}\nMonthly income: ${fmt(income||0)}\nCredit score: ${score}`,messages:[...msgs.filter((_,i)=>i>0).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t})),{role:"user",content:txt}]})});
       const d=await res.json();
       setMsgs(m=>[...m,{r:"ai",t:d.content?.[0]?.text||"Something went wrong."}]);
     }catch{setMsgs(m=>[...m,{r:"ai",t:"Couldn't connect. Try again."}]);}
@@ -1428,7 +1428,7 @@ function HealthTab({debts,isPlus,onUpgrade,score,setScore,assets,income,efund,de
   const getAiCredit=async()=>{
     setAiCreditLoad(true);
     const cards=debts.filter(d=>d.type==="credit"),lim=cards.reduce((s,d)=>s+d.original,0),bal=cards.reduce((s,d)=>s+d.balance,0),util=lim>0?(bal/lim)*100:0;
-    try{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:"Concise credit coach for young adults. Plain English only. Max 80 words. One specific action at the end.",messages:[{role:"user",content:`My credit score is ${score}. Credit card utilization: ${Math.round(util)}% ($${Math.round(bal)} of $${Math.round(lim)} limit). ${cards.length} credit cards. What's the most important thing I can do to improve my score?`}]})});const d=await res.json();setAiCredit(d.content?.[0]?.text||"");}
+    try{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:"Concise credit coach for young adults. Plain English only. Max 80 words. One specific action at the end.",messages:[{role:"user",content:`My credit score is ${score}. Credit card utilization: ${Math.round(util)}% ($${Math.round(bal)} of $${Math.round(lim)} limit). ${cards.length} credit cards. What's the most important thing I can do to improve my score?`}]})});const d=await res.json();setAiCredit(d.content?.[0]?.text||"");}
     catch{setAiCredit("Couldn't connect. Try again.");}
     setAiCreditLoad(false);
   };
@@ -1991,6 +1991,7 @@ export default function App(){
   const [editingDebt,setEditingDebt]=useState(null);
   const [milestoneCard,setMilestoneCard]=useState(null);
   const [showCert,setShowCert]=useState(false);
+  const [moneySub,setMoneySub]=useState("worth");
   const [activeLesson,setActiveLesson]=useState(null);
   const [completedLessons,setCompletedLessons_]=useState(()=>load("mc_lessons",[]));
   const [debts,setDebts_]=useState(()=>load("mc_debts",[]));
@@ -2024,7 +2025,7 @@ export default function App(){
       <Onboarding onDone={d=>{
         setName(d.name);
         if(d.income>0) setIncome(d.income);
-        if(d.firstDebt&&d.firstDebt.length>0) setDebts(d.firstDebt);
+        if(d.firstDebt&&d.firstDebt.length>0){setDebts(d.firstDebt);save('mc_debts',d.firstDebt);}
         setBoarded(true);
       }}/>
     </>
@@ -2056,10 +2057,10 @@ export default function App(){
           </div>
         )}
 
-        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={()=>setTab("plan")} onShowCert={()=>setShowCert(true)}/>}
+        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={(t,s)=>{setTab(t||"plan");if(s)setMoneySub(s);}} onShowCert={()=>setShowCert(true)}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
         {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income} setIncome={setIncome}/>}
-        {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop}/>}
+        {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop} initialSub={moneySub}/>}
         {tab==="learn"&&(
           <HealthAndLearnTab
             completedLessons={completedLessons}
@@ -2186,11 +2187,12 @@ function InvestCalcTab(){
         </div>
 
         <div className="fld" style={{marginTop:4}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-            <div className="flb">Lump sum to start (optional)</div>
-            <span className="mono" style={{fontSize:13,color:C.accent}}>${lump.toLocaleString()}</span>
+          <div className="flb">Lump sum to start (optional)</div>
+          <div style={{position:"relative"}}>
+            <span style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",color:C.muted,fontSize:13}}>$</span>
+            <input className="inp mono" type="number" placeholder="0" value={lump||""} onChange={e=>{const v=parseFloat(e.target.value)||0;setLump(Math.min(v,10000000));}} style={{paddingLeft:22}}/>
           </div>
-          <input className="sli" type="range" min="0" max="50000" step="500" value={lump} onChange={e=>setLump(parseInt(e.target.value))}/>
+          <div style={{fontSize:10,color:C.muted,marginTop:4}}>Up to $10,000,000</div>
         </div>
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:4}}>
