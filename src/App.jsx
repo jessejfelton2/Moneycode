@@ -252,9 +252,19 @@ function Onboarding({onDone}){
   const [income,setIncome]=useState("");
   const [firstDebt,setFirstDebt]=useState({name:"",balance:"",rate:"",min:"",type:"credit"});
 
-  const finish=(fd)=>{
-    const src=fd||firstDebt;
-    const debt=src.name&&src.balance?[{id:Date.now(),name:src.name,balance:parseFloat(src.balance)||0,original:parseFloat(src.balance)||0,rate:parseFloat(src.rate)||0,min:parseFloat(src.min)||0,type:src.type,color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[src.type]||C.blue}]:[];
+  const finish=()=>{
+    const bal=parseFloat(firstDebt.balance)||0;
+    const debt=firstDebt.name&&bal>0?[{
+      id:Date.now(),
+      name:firstDebt.name.trim(),
+      balance:bal,
+      original:bal,
+      rate:Math.min(parseFloat(firstDebt.rate)||0,100),
+      min:parseFloat(firstDebt.min)||0,
+      type:firstDebt.type||"credit",
+      due:null,
+      color:{credit:C.red,student:C.blue,auto:C.yellow,personal:C.blue}[firstDebt.type]||C.blue
+    }]:[];
     onDone({name,hasDebts,hasJob,income:parseFloat(income)||0,firstDebt:debt});
   };
   const next=()=>{
@@ -1068,6 +1078,7 @@ function PlanTab({debts,isPlus,onUpgrade,income,setIncome}){
 // ── MONEY TAB (Net Worth + Budget + Invest) ───────────────────────────────────
 function MoneyTab({debts,assets,setAssets,income,setIncome,efund,setEfund,isPlus,onUpgrade,pop,initialSub}){
   const [sub,setSub]=useState(initialSub||"worth");
+  useEffect(()=>{if(initialSub)setSub(initialSub);},[initialSub]);
   return(
     <div style={{display:"flex",flexDirection:"column"}}>
       <div style={{padding:"12px 14px 0",background:C.surface,position:"sticky",top:0,zIndex:10}}>
@@ -2057,7 +2068,7 @@ export default function App(){
           </div>
         )}
 
-        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={(t,s)=>{setTab(t||"plan");if(s)setMoneySub(s);}} onShowCert={()=>setShowCert(true)}/>}
+        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={(t,s)=>{if(s)setMoneySub(s);setTimeout(()=>setTab(t||"money"),0);}} onShowCert={()=>setShowCert(true)}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
         {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income} setIncome={setIncome}/>}
         {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop} initialSub={moneySub}/>}
@@ -2107,7 +2118,7 @@ function InvestCalcTab(){
   const [rate,setRate]=useState(10);
   const [lump,setLump]=useState(0);
 
-  const years=Math.max(0,retireAge-age);
+  const years=Math.max(0,(parseInt(retireAge)||65)-(parseInt(age)||22));
   const r=rate/100/12;
   const n=years*12;
 
@@ -2198,11 +2209,11 @@ function InvestCalcTab(){
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:4}}>
           <div className="fld">
             <div className="flb">Your age</div>
-            <input className="inp mono" type="number" min="10" max="80" value={age} onChange={e=>setAge(Math.min(80,Math.max(10,parseInt(e.target.value)||22)))}/>
+            <input className="inp mono" type="number" value={age} onChange={e=>{const v=e.target.value;setAge(v===""?"":parseInt(v)||age);}}/>
           </div>
           <div className="fld">
             <div className="flb">Retire at age</div>
-            <input className="inp mono" type="number" min="30" max="90" value={retireAge} onChange={e=>setRetireAge(Math.min(90,Math.max(age+1,parseInt(e.target.value)||65)))}/>
+            <input className="inp mono" type="number" value={retireAge} onChange={e=>{const v=e.target.value;setRetireAge(v===""?"":parseInt(v)||retireAge);}}/>
           </div>
         </div>
 
