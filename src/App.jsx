@@ -546,7 +546,7 @@ const LESSONS = [
         heading:"The 401k match is always free money",
         body:"If your employer matches your 401k contributions, that's an instant 50–100% return. Nothing beats it.\n\nExample: You contribute $100. Employer matches $100. You now have $200 invested. That's a 100% return before the market does anything.\n\nAlways contribute at least enough to get the full match.",
         realLife:"🎁 Employer 401k match = the only guaranteed 100% return in personal finance. If you're not getting the full match, you're leaving free money on the table.",
-      },
+     },
       {
         type:"quiz",
         question:"You have a credit card at 22% APR and your employer matches 401k contributions 100%. What should you do?",
@@ -555,10 +555,7 @@ const LESSONS = [
         explanation:"The 401k match is a 100% instant return — nothing beats it. Get the full match first (that's your priority), then throw everything at the 22% credit card. The card is costing more than any investment will earn.",
       },
     ],
-  },
-];
-
-,
+  }, // Removed the extra "]," and stray comma here so the objects chain seamlessly
   {
     id:"taxes-101",
     emoji:"🧾",
