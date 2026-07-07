@@ -244,7 +244,7 @@ function calcHealth({debts,score,assets,income,efund}){
 }
 
 // ── ONBOARDING ─────────────────────────────────────────────────────────────────
-function Onboarding({onDone}){
+function Onboarding({onDone,existingName}){
   const [step,setStep]=useState(0);
   const [name,setName]=useState("");
   const [hasDebts,setHasDebts]=useState(null);
@@ -558,6 +558,96 @@ const LESSONS = [
   },
 ];
 
+,
+  {
+    id:"taxes-101",
+    emoji:"🧾",
+    title:"Taxes — what actually gets taken out",
+    subtitle:"W2s, refunds, and why your paycheck is smaller than you expected",
+    duration:"2 min",
+    color:"#FF9F43",
+    steps:[
+      {
+        type:"explain",
+        heading:"Why your paycheck is smaller than your salary",
+        body:"When you earn money, the government takes a cut before you see it. This is called withholding — your employer sends it directly to the IRS on your behalf.\n\nFederal income tax, state tax, Social Security (6.2%), and Medicare (1.45%) all come out. That's why a $20/hr job doesn't mean $3,200/month.",
+        realLife:"💰 $20/hr × 80hrs = $1,600 gross. After taxes (~25% total): roughly $1,200 take-home. Always use take-home pay for budgeting, not your salary.",
+      },
+      {
+        type:"explain",
+        heading:"Tax refunds aren't free money",
+        body:"A tax refund means you overpaid the IRS throughout the year — and now they're giving it back, interest-free.\n\nA big refund actually means you gave the government a free loan. Ideally you'd break even — owe nothing, get nothing back — and keep that money in your pocket all year.",
+        realLife:"📊 Average tax refund is ~$3,000. That's $250/month you could have had in your bank account all year. Adjust your W-4 withholding to keep more each paycheck.",
+      },
+      {
+        type:"quiz",
+        question:"You get a $2,400 tax refund. What does this actually mean?",
+        options:["You got a bonus from the government","You overpaid taxes by $200/month all year — the IRS is returning your own money","You underpaid and got lucky","Your employer gave you extra money"],
+        correct:1,
+        explanation:"A refund means you overpaid throughout the year. The IRS held your money interest-free. Adjusting your W-4 lets you keep that $200/month in your own pocket instead.",
+      },
+    ],
+  },
+  {
+    id:"renting-vs-buying",
+    emoji:"🏠",
+    title:"Renting vs. buying a home",
+    subtitle:"The real math behind one of the biggest financial decisions you'll make",
+    duration:"2 min",
+    color:"#A78BFA",
+    steps:[
+      {
+        type:"explain",
+        heading:"Renting isn't throwing money away",
+        body:"You've probably heard 'renting is throwing money away.' That's not true.\n\nWhen you rent, you pay for housing — a place to live. When you buy, you pay interest, property taxes, insurance, and maintenance — much of which also doesn't build equity.\n\nBuying makes sense when you plan to stay 5+ years and can afford it without stretching.",
+        realLife:"🏠 On a $300,000 home with 20% down, your first mortgage payment: ~70% goes to interest, 30% to principal. You're mostly paying the bank — not building equity yet.",
+      },
+      {
+        type:"explain",
+        heading:"The real costs of buying",
+        body:"Buying a home costs more than the mortgage payment:\n• Down payment (typically 3–20%)\n• Closing costs (2–5% of purchase price)\n• Property taxes (1–2%/yr)\n• Home insurance\n• Maintenance (budget 1%/yr of home value)\n\nA $300k home could need $30k+ upfront and $500+/month in non-mortgage costs.",
+        realLife:"🔧 Rule of thumb: budget 1% of your home's value per year for maintenance. On a $300k home that's $3,000/yr ($250/month) for repairs you didn't plan for.",
+      },
+      {
+        type:"quiz",
+        question:"You're 22 and might move cities in 2 years for work. Which makes more financial sense?",
+        options:["Buy now — it's always better than renting","Rent — buying and selling within 2 years usually loses money after closing costs","Buy and rent it out if you move","It doesn't matter"],
+        correct:1,
+        explanation:"Buying and selling within 2–3 years usually loses money once you factor in closing costs (2–5% on purchase AND sale). Renting gives you flexibility. Buy when you're ready to stay 5+ years.",
+      },
+    ],
+  },
+  {
+    id:"negotiating-salary",
+    emoji:"💼",
+    title:"How to negotiate your salary",
+    subtitle:"Most people leave thousands on the table. Here's how not to.",
+    duration:"2 min",
+    color:"#3FB950",
+    steps:[
+      {
+        type:"explain",
+        heading:"Negotiating is expected — not rude",
+        body:"Most employers make their first offer expecting you to negotiate. When you accept without negotiating, you're leaving money on the table — and that compounds over your entire career.\n\nA $5,000 raise at 22 — if you get 3% annual raises on that higher base — is worth $150,000+ over a 40-year career.",
+        realLife:"💡 Someone who negotiates their starting salary from $45k to $50k and gets identical raises will earn $150k+ more over their career. Same job, same raises — just asked for more once.",
+      },
+      {
+        type:"explain",
+        heading:"How to actually do it",
+        body:"1. Research the market rate first (Glassdoor, Levels.fyi, LinkedIn Salary)\n2. Ask for 10–20% more than you'd accept\n3. Let them make the first offer if possible\n4. Use silence — after giving your number, stop talking\n5. If they can't budge on salary, negotiate signing bonus, extra PTO, remote work, or review timeline\n\nScript: 'Based on my research and experience, I was expecting something closer to $X. Is there flexibility there?'",
+        realLife:"📞 'Is there flexibility on the salary?' — this one sentence has gotten millions of people raises. The worst they can say is no. Most of the time they come back with more.",
+      },
+      {
+        type:"quiz",
+        question:"A company offers you $48,000. You were hoping for $55,000. What should you do?",
+        options:["Accept immediately so they don't rescind the offer","Say 'I was expecting something closer to $55,000 — is there flexibility?' and wait","Reject the offer","Ask for $70,000 to anchor high"],
+        correct:1,
+        explanation:"Asking calmly and specifically is almost always worth it. Offers are rarely rescinded for negotiating professionally. A $7k raise compounded over your career is worth hundreds of thousands of dollars.",
+      },
+    ],
+  },
+];
+
 // ── Lesson Screen ─────────────────────────────────────────────────────────────
 function LessonScreen({lesson, onClose, onComplete}){
   const [step,setStep]=useState(0);
@@ -696,7 +786,7 @@ function LearnTab({completedLessons, onComplete, onOpenLesson}){
 }
 
 // ── HOME TAB ──────────────────────────────────────────────────────────────────
-function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage,onShowCert,setTab,setMoneySub}){
+function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score,assets,income,efund,onOpenManage,onShowCert,setTab,setMoneySub,lastSync,onSyncNow}){
   const total=debts.reduce((s,d)=>s+d.balance,0);
   const orig=debts.reduce((s,d)=>s+d.original,0);
   const mins=debts.reduce((s,d)=>s+d.min,0);
@@ -705,6 +795,8 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
   const mo=mins>0?Math.min(Math.ceil(total/(mins*1.3)),600):0;
   const hr=new Date().getHours();
   const greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+  const daysSinceSync=lastSync?Math.floor((Date.now()-lastSync)/(1000*60*60*24)):null;
+  const showSyncReminder=debts.length>0&&(daysSinceSync===null||daysSinceSync>=30);
   const health=calcHealth({debts,score,assets,income,efund});
   const intPerDay=intMo/30;
   const coffeePerDay=(intPerDay/5).toFixed(1);
@@ -761,6 +853,11 @@ function HomeTab({debts,isPlus,onSync,onUpgrade,onCelebrate,name,onAddDebt,score
       </div>
 
       <Gauge pct={p}/>
+
+      {showSyncReminder&&<div style={{background:C.yellow+"15",border:`1px solid ${C.yellow}40`,borderRadius:10,padding:"10px 13px",marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div><div style={{fontWeight:600,fontSize:12,color:C.yellow}}>⏰ Time to update your balances</div><div style={{fontSize:11,color:C.muted,marginTop:2}}>{daysSinceSync===null?"Sync your balances to keep your plan accurate":`Last synced ${daysSinceSync} days ago`}</div></div>
+        <button className="btn bsm" style={{background:C.yellow,color:"#080C12",flexShrink:0}} onClick={onSyncNow}>Sync</button>
+      </div>}
 
       <div className="chips" style={{marginTop:10}}>
         <div className="chip">
@@ -1955,6 +2052,67 @@ function CSVModal({onClose,onImport}){
 }
 
 
+
+// ── EXPORT DATA ───────────────────────────────────────────────────────────────
+function exportData(debts,assets,income){
+  const rows=[["Type","Name","Balance","Original","Rate %","Min Payment","Paid %"]];
+  debts.forEach(d=>rows.push(["Debt",d.name,d.balance,d.original,d.rate,d.min,Math.round((1-d.balance/Math.max(d.original,1))*100)+"%"]));
+  assets.forEach(a=>rows.push(["Asset",a.name,a.value,"","","",""]));
+  rows.push(["Income","Monthly take-home",income,"","","",""]);
+  const csv=rows.map(r=>r.join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="moneycode-export.csv";a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ── SETTINGS MODAL ────────────────────────────────────────────────────────────
+function SettingsModal({onClose,onReset,onExport,darkMode,setDarkMode,name,isPlus,onUpgrade}){
+  return(
+    <div className="mover" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="mo">
+        <div className="hdl"/>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:16}}>Settings</div>
+
+        {name&&<div className="card" style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:C.muted,marginBottom:2}}>Signed in as</div>
+          <div style={{fontWeight:600,fontSize:14}}>{name}</div>
+          {isPlus&&<span className="tag tpl" style={{marginTop:6,display:"inline-block"}}>✦ Plus member</span>}
+        </div>}
+
+        <p className="lbl">Preferences</p>
+        <div className="card" style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0"}}>
+            <div><div style={{fontWeight:600,fontSize:13}}>Dark mode</div><div style={{fontSize:11,color:C.muted,marginTop:1}}>Dark background (recommended)</div></div>
+            <button className="ttrk" style={{background:darkMode?C.accent:C.border}} onClick={()=>setDarkMode(!darkMode)}><div className="ttmb" style={{left:darkMode?22:3}}/></button>
+          </div>
+        </div>
+
+        <p className="lbl">Your data</p>
+        <div className="card" style={{marginBottom:10}}>
+          <button className="btn bg bfull" style={{marginBottom:8,justifyContent:"flex-start",gap:10}} onClick={()=>{onExport();onClose();}}>
+            <span>📥</span><span>Export data as CSV</span>
+          </button>
+          <button className="btn bg bfull" style={{color:C.red,borderColor:C.red+"44",justifyContent:"flex-start",gap:10}} onClick={onReset}>
+            <span>🗑️</span><span>Reset everything</span>
+          </button>
+        </div>
+
+        {!isPlus&&<div className="card" style={{borderColor:C.yellow+"30",background:"linear-gradient(135deg,#141B27,#1A1A2E)",marginBottom:10}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:5}}>✦ Upgrade to Plus</div>
+          <div style={{fontSize:12,color:C.muted,marginBottom:10}}>AI Advisor, Freedom Date, credit analysis and more.</div>
+          <button className="btn bplus bfull" onClick={()=>{onClose();onUpgrade();}}>Start 14-day free trial</button>
+        </div>}
+
+        <div style={{textAlign:"center",marginTop:8,fontSize:11,color:C.muted}}>Moneycode v1.0 · moneycode.app</div>
+        <button className="btn bg bfull bsm" style={{marginTop:10}} onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
 // ── RESET MODAL ───────────────────────────────────────────────────────────────
 function ResetModal({onClose,onConfirm}){
   return(
@@ -2000,9 +2158,14 @@ export default function App(){
   const [tab,setTab]=useState("home");
   const [modal,setModal]=useState(null);
   const [editingDebt,setEditingDebt]=useState(null);
+  const [lastSync,setLastSync_]=useState(()=>load("mc_lastsync",null));
+  const setLastSync=v=>{setLastSync_(v);save("mc_lastsync",v);};
   const [milestoneCard,setMilestoneCard]=useState(null);
   const [showCert,setShowCert]=useState(false);
+  const [showSettings,setShowSettings]=useState(false);
   const [moneySub,setMoneySub]=useState("worth");
+  const [darkMode,setDarkMode_]=useState(()=>load("mc_dark",true));
+  const setDarkMode=v=>{setDarkMode_(v);save("mc_dark",v);};
   const [activeLesson,setActiveLesson]=useState(null);
   const [completedLessons,setCompletedLessons_]=useState(()=>load("mc_lessons",[]));
   const [debts,setDebts_]=useState(()=>load("mc_debts",[]));
@@ -2028,6 +2191,18 @@ export default function App(){
 
   const pop=(msg,icon="✓")=>{setToast({msg,icon});setTimeout(()=>setToast(null),2200);};
   const upgrade=()=>{setIsPlus(true);setShowPW(false);pop("Welcome to Plus ✦","✦");};
+
+  // Inject PWA meta tags once
+  useEffect(()=>{
+    const setMeta=(n,c)=>{let m=document.querySelector(`meta[name="${n}"]`)||document.createElement("meta");m.name=n;m.content=c;document.head.appendChild(m);};
+    const setLink=(r,h)=>{let l=document.querySelector(`link[rel="${r}"]`)||document.createElement("link");l.rel=r;l.href=h;document.head.appendChild(l);};
+    setMeta("theme-color","#080C12");
+    setMeta("mobile-web-app-capable","yes");
+    setMeta("apple-mobile-web-app-capable","yes");
+    setMeta("apple-mobile-web-app-status-bar-style","black-translucent");
+    setMeta("apple-mobile-web-app-title","Moneycode");
+    document.title="Moneycode — Get out of debt";
+  },[]);;
   const onCelebrate=m=>{setCel(m);setTimeout(()=>setCel(null),3500);};
 
   if(!boarded) return (
@@ -2038,7 +2213,7 @@ export default function App(){
         if(d.income>0) setIncome(d.income);
         if(d.firstDebt&&d.firstDebt.length>0){setDebts(d.firstDebt);save('mc_debts',d.firstDebt);}
         setBoarded(true);
-      }}/>
+      }} existingName={name}/>
     </>
   );
 
@@ -2064,11 +2239,12 @@ export default function App(){
                 :<button className="btn bplus bsm" onClick={()=>setShowPW(true)}>✦ Plus</button>
               }
               <button className="btn bg bico bsm" onClick={()=>setModal("sync")}><I.Sync/></button>
+              <button className="btn bg bico bsm" onClick={()=>setShowSettings(true)} style={{fontSize:15}}>⚙️</button>
             </div>
           </div>
         )}
 
-        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={(t,s)=>{if(s)setMoneySub(s);setTimeout(()=>setTab(t||"money"),0);}} onShowCert={()=>setShowCert(true)}/>}
+        {tab==="home" &&<HomeTab   debts={debts} isPlus={isPlus} onSync={()=>setModal("sync")} onUpgrade={()=>setShowPW(true)} onCelebrate={onCelebrate} name={name} onAddDebt={()=>{setTab("debts");setModal("add");}} score={score} assets={assets} income={income} efund={efund} onOpenManage={(t,s)=>{if(s)setMoneySub(s);setTimeout(()=>setTab(t||"money"),0);}} onShowCert={()=>setShowCert(true)} lastSync={lastSync} onSyncNow={()=>setModal("sync")}/>}
         {tab==="debts"&&<DebtsTab  debts={debts} setDebts={setDebts} openModal={setModal} pop={pop} onEdit={d=>setEditingDebt(d)}/>}
         {tab==="plan" &&<PlanTab   debts={debts} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} income={income} setIncome={setIncome}/>}
         {tab==="money"&&<MoneyTab  debts={debts} assets={assets} setAssets={setAssets} income={income} setIncome={setIncome} efund={efund} setEfund={setEfund} isPlus={isPlus} onUpgrade={()=>setShowPW(true)} pop={pop} initialSub={moneySub}/>}
@@ -2093,9 +2269,10 @@ export default function App(){
 
         {modal==="add"   &&<AddDebtModal onClose={()=>setModal(null)} onAdd={d=>{setDebts(x=>[...x,d]);pop("Debt added");}}/>}
         {editingDebt    &&<EditDebtModal debt={editingDebt} onClose={()=>setEditingDebt(null)} onSave={d=>{setDebts(x=>x.map(v=>v.id===d.id?d:v));setEditingDebt(null);pop("Updated");}}/>}
-        {modal==="sync"  &&<SyncModal    debts={debts} onClose={()=>setModal(null)} onSync={u=>{setDebts(d=>d.map(x=>{const f=u.find(v=>v.id===x.id);return f?{...x,balance:Math.max(0,f.next)}:x;}));pop("Balances updated");}}/>}
+        {modal==="sync"  &&<SyncModal    debts={debts} onClose={()=>setModal(null)} onSync={u=>{setDebts(d=>d.map(x=>{const f=u.find(v=>v.id===x.id);return f?{...x,balance:Math.max(0,f.next)}:x;}));setLastSync(Date.now());pop("Balances updated");}}/>}
         {modal==="import"&&<CSVModal     onClose={()=>setModal(null)} onImport={d=>{setDebts(x=>[...x,...d]);pop(`${d.length} debts imported`);}}/>}
         {modal==="reset" &&<ResetModal   onClose={()=>setModal(null)} onConfirm={()=>{localStorage.clear();window.location.reload();}}/>}
+        {showSettings&&<SettingsModal onClose={()=>setShowSettings(false)} onReset={()=>{setShowSettings(false);setModal("reset");}} onExport={()=>exportData(debts,assets,income)} darkMode={darkMode} setDarkMode={setDarkMode} name={name} isPlus={isPlus} onUpgrade={()=>setShowPW(true)}/>}
         {showPW          &&<PaywallModal onClose={()=>setShowPW(false)} onUpgrade={upgrade}/>}
 
         {activeLesson&&<LessonScreen lesson={activeLesson} onClose={()=>setActiveLesson(null)} onComplete={id=>{setCompletedLessons(x=>[...x.filter(v=>v!==id),id]);pop("Lesson complete! 🎓","🎓");}}/>}
